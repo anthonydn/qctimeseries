@@ -69,9 +69,47 @@ qc_window_app <- function(dat,
   x_range     <- NULL
 
   # --- UI ---------------------------------------------------------------------
-  ui <- shiny::fluidPage(
-    # (UI block unchanged)
-    ...
+  ui <- fluidPage(
+    tags$head(tags$style("
+      .btn-row{display:flex;justify-content:center;flex-wrap:wrap;gap:6px}
+      .btn-row .btn,.btn-row .form-control{margin:3px 4px;height:34px;}
+      .label-inline{font-weight:bold;display:flex;align-items:center;}
+    ")),
+    h4(paste("QC:", y_col)),
+    textOutput("win_label"),
+    plotlyOutput("tsplot", height = 440),
+    tags$hr(style="margin:4px 0;"),
+    div(class="btn-row",
+        actionButton("prev_win","Prev"),
+        actionButton("next_win","Next"),
+        numericInput("jump", NULL, 1, min = 1, width = "80px"),
+        actionButton("approve_next","Approve ENTIRE & Next ▶︎",
+                     class="btn-success"),
+        actionButton("flag_sel_next",
+                     "Flag Selected ➜ Approve others & Next",
+                     class="btn-danger")
+    ),
+    div(class="btn-row",
+        actionButton("flag_sel",   "Flag Selected Points", class="btn-danger"),
+        actionButton("unflag_sel", "Unflag Selected Points"),
+        actionButton("approve_sel","Approve Selected Points",
+                     class="btn-success")
+    ),
+    div(class="btn-row",
+        actionButton("flag_win",        "Flag ENTIRE Window",
+                     class="btn-danger"),
+        actionButton("approve_unflagged","Approve ALL Unflagged",
+                     class="btn-success"),
+        actionButton("reset_win",       "Reset Window → Unchecked")
+    ),
+    tags$hr(style="margin:4px 0;"),
+    div(class="btn-row",
+        checkboxInput("hide_bad","Hide flagged (red)", FALSE),
+        span(class="label-inline","Window (hrs):"),
+        numericInput("win_width",NULL,win_hrs,min=1,width="90px"),
+        actionButton("reset_all","Reset ALL → Unchecked"),
+        actionButton("done",     "Done / Return", class="btn-primary")
+    )
   )
 
   # --- server -----------------------------------------------------------------
