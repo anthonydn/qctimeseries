@@ -1,7 +1,36 @@
 #' Interactive QC for Time-Series Windows
-#' ...
-#' (roxygen header unchanged)
+#'
+#' Launch a Shiny app to visually inspect and flag bad data points in large
+#' numeric time-series datasets.  Data are split into fixed-width windows
+#' (e.g. 168 hours) so only one slice is rendered at a time, allowing smooth
+#' interaction even with millions of rows.
+#'
+#' @param dat A `data.frame` or `data.table` containing at least a POSIXct
+#'   time column and one numeric column to QC.
+#' @param y_col `string`. Name of the numeric column to display and flag.
+#' @param win_hrs Window width in hours (default 168 = one week).
+#' @param qc_suffix Suffix for the flag column. A new integer column
+#'   `paste0(y_col, qc_suffix)` must already exist; it will be updated in
+#'   place (`1 = approved`, `0 = unchecked`, `-2 = flagged`, `-1 = original NA`).
+#' @param time_col Name of the POSIXct column. Defaults to `"DateTime"`.
+#' @param tz_user Time zone used for display (affects x-axis labels only).
+#'
+#' @return A `data.frame` identical to `dat` but with modified QC flag column.
 #' @export
+#' @import data.table
+#'
+#' @examples
+#' if (interactive()) {
+#'   dummy <- data.frame(
+#'     DateTime = seq.POSIXt(Sys.time(), length.out = 5000, by = "hour"),
+#'     temp     = rnorm(5000, 20, 2),
+#'     temp_qcflag = integer(5000)
+#'   )
+#'   qc_window_app(dummy, y_col = "temp")
+#' }
+
+
+
 qc_window_app <- function(dat,
                           y_col,
                           win_hrs   = 168,
