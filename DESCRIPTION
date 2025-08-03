@@ -1,0 +1,27 @@
+Package: qctimeseries
+Type: Package
+Title: Interactive Quality Control for Time-Series Data
+Version: 0.1.0
+Authors@R: c(
+    person("Anthony", "Darrouzet-Nardi",
+           email = "adarrouzetnardi@gmail.com",
+           role  = c("aut", "cre")))
+Description: A Shiny-based visual tool that uses interactive brushing to
+    inspect and flag bad data points in numeric time-series datasets up to
+    a few million rows.  Features include arbitrary POSIXct time columns,
+    window-by-window navigation, per-point or bulk flagging, and an optional
+    secondary-variable overlay panel.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1
+Depends: R (>= 4.1)
+Imports:
+    shiny,
+    plotly,
+    data.table
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
+LazyData: false
