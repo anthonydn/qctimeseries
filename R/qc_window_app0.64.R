@@ -18,6 +18,8 @@
 #' @return A `data.frame` identical to `dat` but with modified QC flag column.
 #' @export
 #' @import data.table
+#' @import shiny
+#' @import plotly
 #'
 #' @examples
 #' if (interactive()) {
