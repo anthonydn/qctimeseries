@@ -37,13 +37,12 @@ qc_window_app <- function(dat,
                           y_col,
                           win_hrs   = 168,
                           qc_suffix = "_qcflag",
+                          time_col  = "DateTime",
                           tz_user   = "America/Denver") {
 
   # --- load / sanity ----------------------------------------------------------
-  stopifnot(is.data.frame(dat), "DateTime" %in% names(dat))
-
-  if (!inherits(dat$DateTime, "POSIXct"))
-    dat$DateTime <- as.POSIXct(dat$DateTime, tz = tz_user)
+  if (!inherits(dat[[time_col]], "POSIXct"))
+    dat[[time_col]] <- as.POSIXct(dat[[time_col]], tz = tz_user)
 
   fcol <- paste0(y_col, qc_suffix)
   if (!fcol %in% names(dat))
@@ -54,9 +53,9 @@ qc_window_app <- function(dat,
   if (!".rowid" %in% names(dt)) dt[, .rowid := .I]
 
   make_windows <- function(hrs) {
-    start <- min(dt$DateTime, na.rm = TRUE)
+    start <- min(dt[[time_col]], na.rm = TRUE)
     dt[, win_id := as.integer(
-      floor(as.numeric(difftime(DateTime, start, "secs")) / (hrs * 3600))
+      floor(as.numeric(difftime(get(time_col), start, "secs")) / (hrs * 3600))
     )]
 
     wins <- split(dt$.rowid, dt$win_id)
@@ -135,7 +134,7 @@ qc_window_app <- function(dat,
       wd   <- dt[rows]
       vals <- wd[[y_col]]
 
-      xr <- if (is.null(x_range)) range(wd$DateTime, na.rm = TRUE) else x_range
+      xr <- if (is.null(x_range)) range(wd[[time_col]], na.rm = TRUE) else x_range
 
       if (all(is.na(vals))) {
         return(
@@ -163,7 +162,7 @@ qc_window_app <- function(dat,
 
       p <- plot_ly(
         dt[base_rows],
-        x     = ~DateTime,
+        x     = ~get(time_col),
         y     = ~get(y_col),
         type  = "scattergl",
         mode  = "lines+markers",
@@ -174,7 +173,7 @@ qc_window_app <- function(dat,
       ) %>%
         layout(
           dragmode = "zoom",
-          xaxis = list(range = xr),
+          xaxis = list(range = xr, title = list(text = "")),
           yaxis = list(range = yr, title = y_col)
         ) %>%
         event_register("plotly_selected") %>%
@@ -184,7 +183,7 @@ qc_window_app <- function(dat,
         if (!length(idx)) return(p)
         add_trace(
           p, data = dt[idx],
-          x = ~DateTime, y = ~get(y_col),
+          x = ~get(time_col), y = ~get(y_col),
           type = "scattergl", mode = "markers",
           marker = list(size = 6, color = col, opacity = 0.9),
           inherit = FALSE, showlegend = FALSE
@@ -200,7 +199,7 @@ qc_window_app <- function(dat,
       if (!keep_zoom) x_range <<- NULL
       updateNumericInput(session, "jump", value = current_win + 1)
       output$tsplot <- renderPlotly(build_plot())
-      rng <- range(dt[rows_now(), DateTime], na.rm = TRUE)
+      rng <- range(dt[rows_now(), get(time_col)], na.rm = TRUE)
       output$win_label <- renderText(sprintf(
         "Window %d / %d   %s – %s",
         current_win + 1, length(win_rows),
