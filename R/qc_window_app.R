@@ -40,30 +40,30 @@ qc_window_app <- function(dat,
                           time_col  = "DateTime",
                           tz_user   = "America/Denver") {
 
-  # --- load / sanity ----------------------------------------------------------
+  # --- load ----------------------------------------------------------
   if (!inherits(dat[[time_col]], "POSIXct"))
     dat[[time_col]] <- as.POSIXct(dat[[time_col]], tz = tz_user)
 
   fcol <- paste0(y_col, qc_suffix)
   if (!fcol %in% names(dat))
     stop("qc_window_app(): column '", fcol,
-         "' not found.  Create flags with qc() first.")
+         "' not found.  Create flags with qc_flags() first.")
 
   dt <- as.data.table(dat)
   if (!".rowid" %in% names(dt)) dt[, .rowid := .I]
 
   make_windows <- function(hrs) {
-    start <- min(dt[[time_col]], na.rm = TRUE)
+    start <- min(dt$DateTime, na.rm = TRUE)
     dt[, win_id := as.integer(
-      floor(as.numeric(difftime(get(time_col), start, "secs")) / (hrs * 3600))
-    )]
-
+      floor(as.numeric(difftime(DateTime, start, "secs")) / (hrs*3600)) )]
+    # initial split → list(row-ids)
     wins <- split(dt$.rowid, dt$win_id)
+    # keep only windows that contain ≥1 non-NA y-value
     wins <- Filter(function(idx) any(!is.na(dt[[y_col]][idx])), wins)
     names(wins) <- seq_along(wins) - 1L
-    wins
-  }
+    wins}
   win_rows <- make_windows(win_hrs)
+
 
   # --- state ------------------------------------------------------------------
   current_win <- 0L
@@ -135,23 +135,6 @@ qc_window_app <- function(dat,
       vals <- wd[[y_col]]
 
       xr <- if (is.null(x_range)) range(wd[[time_col]], na.rm = TRUE) else x_range
-
-      if (all(is.na(vals))) {
-        return(
-          plot_ly() %>%
-            add_text(
-              x = mean(xr), y = 0,
-              text = "All values NA in this window",
-              textposition = "middle center",
-              inherit = FALSE, showlegend = FALSE
-            ) %>%
-            layout(
-              xaxis = list(range = xr, title = "DateTime"),
-              yaxis = list(title = y_col),
-              dragmode = "zoom"
-            )
-        )
-      }
 
       span <- diff(range(vals, na.rm = TRUE))
       yr   <- range(vals, na.rm = TRUE) + c(-1, 1) * 0.02 * span
