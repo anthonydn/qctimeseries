@@ -125,16 +125,15 @@ qc_remove_flags <- function(data, vars = NULL, suffix = NULL, strict = FALSE) {
 #'
 #' @param data A data.frame returned by [qc_add_flags()].
 #' @param quiet If `TRUE`, return invisibly without printing.
+#' @param hide_complete If `TRUE`, only return rows with `pct_checked < 100`.
 #' @return A tibble/data.frame with per-variable totals and percentages.
 #' @details
 #' Percentages are computed over **all rows** (including missing) by default.
-#' If you prefer to compute over non-missing rows, set `denom = "valid"` (optional param).
-
-qc_progress <- function(data, quiet = FALSE) {
+qc_progress <- function(data, quiet = FALSE, hide_complete = FALSE) {
   vars   <- attr(data, "qc_vars")
   suffix <- attr(data, "qc_suffix")
   if (is.null(vars) || is.null(suffix))
-    stop("qc_progress(): data does not look like a qc() result")
+    stop("qc_progress(): data does not look like a qc_add_flags() result")
 
   library(dplyr)
 
@@ -145,7 +144,7 @@ qc_progress <- function(data, quiet = FALSE) {
 
     n_all   <- length(val)
     n_miss  <- sum(is.na(val))
-    n_valid <- n_all - n_miss          # “total” = non-NA rows
+    n_valid <- n_all - n_miss
 
     n_app <- sum(flag ==  1L, na.rm = TRUE)
     n_rej <- sum(flag <   0L, na.rm = TRUE) - n_miss
@@ -157,14 +156,19 @@ qc_progress <- function(data, quiet = FALSE) {
       pct_checked  = round(100 * n_chk / n_all, 2),
       pct_approved = round(100 * n_app / n_all, 2),
       pct_flagged  = round(100 * n_rej / n_all, 2),
-      pct_missing  = round(100 * n_miss / n_all,  2)
+      pct_missing  = round(100 * n_miss / n_all, 2)
     )
   }) |>
     bind_rows()
 
+  if (hide_complete) {
+    res <- dplyr::filter(res, pct_checked < 100)
+  }
+
   if (!quiet) print(res, n = Inf)
   invisible(res)
 }
+
 
 #' Copy QC flags from one variable to another
 #'
