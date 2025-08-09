@@ -45,9 +45,8 @@ qc_window_app <- function(dat,
     dat[[time_col]] <- as.POSIXct(dat[[time_col]], tz = tz_user)
 
   fcol <- paste0(y_col, qc_suffix)
-  if (!fcol %in% names(dat))
-    stop("qc_window_app(): column '", fcol,
-         "' not found.  Create flags with qc_flags() first.")
+  if (!fcol %in% names(dat)) stop("qc_window_app(): column '", fcol,
+    "' not found.  Create flags with qc_flags() first.")
 
   dt <- as.data.table(dat)
   if (!".rowid" %in% names(dt)) dt[, .rowid := .I]
@@ -68,66 +67,55 @@ qc_window_app <- function(dat,
   # --- state ------------------------------------------------------------------
   current_win <- 0L
   x_range     <- NULL
+  y_range     <- NULL
 
   # --- UI ---------------------------------------------------------------------
   ui <- fluidPage(
     tags$head(tags$style("
-      .btn-row{display:flex;justify-content:center;flex-wrap:wrap;gap:6px}
-      .btn-row .btn,.btn-row .form-control{margin:3px 4px;height:34px;}
-      .label-inline{font-weight:bold;display:flex;align-items:center;}
-    ")),
-    h4(paste("QC:", y_col)),
+    .btn-row{display:flex;justify-content:center;flex-wrap:wrap;gap:6px}
+    .btn-row .btn,.btn-row .form-control{margin:3px 4px;height:34px;}
+    .label-inline{font-weight:bold;display:flex;align-items:center;}")),
     textOutput("win_label"),
     plotlyOutput("tsplot", height = 440),
     tags$hr(style="margin:4px 0;"),
+
     div(class="btn-row",
         actionButton("prev_win","Prev"),
         actionButton("next_win","Next"),
         numericInput("jump", NULL, 1, min = 1, width = "80px"),
-        actionButton("approve_next","Approve ENTIRE & Next ▶︎",
-                     class="btn-success"),
+        #actionButton("approve_next","Approve ENTIRE & Next ▶︎",
+        #             class="btn-success"),
         actionButton("flag_sel_next",
-                     "Flag Selected ➜ Approve others & Next",
-                     class="btn-danger")
-    ),
+                     "Flag Selected ➜ Approve unflagged & Next",
+                     class="btn-primary")),
     div(class="btn-row",
         actionButton("flag_sel",   "Flag Selected Points", class="btn-danger"),
         actionButton("unflag_sel", "Unflag Selected Points"),
-        actionButton("approve_sel","Approve Selected Points",
-                     class="btn-success")
-    ),
+        actionButton("approve_sel","Approve Selected Points", class="btn-success")),
     div(class="btn-row",
-        actionButton("flag_win",        "Flag ENTIRE Window",
-                     class="btn-danger"),
-        actionButton("approve_unflagged","Approve ALL Unflagged",
-                     class="btn-success"),
-        actionButton("reset_win",       "Reset Window → Unchecked")
-    ),
+        actionButton("flag_win", "Flag ENTIRE Window", class="btn-danger"),
+        actionButton("approve_unflagged", "Approve ALL Unflagged", class="btn-success"),
+        actionButton("reset_win", "Reset Window → Unchecked")),
     tags$hr(style="margin:4px 0;"),
     div(class="btn-row",
         checkboxInput("hide_bad","Hide flagged (red)", FALSE),
         span(class="label-inline","Window (hrs):"),
         numericInput("win_width",NULL,win_hrs,min=1,width="90px"),
         actionButton("reset_all","Reset ALL → Unchecked"),
-        actionButton("done",     "Done / Return", class="btn-primary")
-    )
-  )
+        actionButton("done",     "Done / Return", class="btn-primary")))
 
   # --- server -----------------------------------------------------------------
   server <- function(input, output, session) {
 
     # always return dt, even on browser close
-    session$onSessionEnded(function() {
-      dt[, c(".rowid", "win_id") := NULL]
-      stopApp(as.data.frame(dt))
-    })
+    session$onSessionEnded(function() {dt[, c(".rowid", "win_id") := NULL]
+      stopApp(as.data.frame(dt))})
 
     rows_now <- function() win_rows[[as.character(current_win)]]
 
     brushed_ids <- function() {
       ev <- event_data("plotly_selected", source = "plot")
-      if (is.null(ev) || !nrow(ev)) integer() else as.integer(ev$key)
-    }
+      if (is.null(ev) || !nrow(ev)) integer() else as.integer(ev$key)}
 
     build_plot <- function() {
       rows <- rows_now()
@@ -140,27 +128,23 @@ qc_window_app <- function(dat,
       yr   <- range(vals, na.rm = TRUE) + c(-1, 1) * 0.02 * span
 
       base_rows <- if (isTRUE(input$hide_bad))
-        rows[dt[rows][[fcol]] >= 0L] else rows
+        rows[dt[rows][[fcol]] >= 0] else rows
       base_rows <- base_rows[!is.na(dt[[y_col]][base_rows])]
 
-      p <- plot_ly(
-        dt[base_rows],
+      p <- plot_ly(dt[base_rows],
         x     = ~get(time_col),
         y     = ~get(y_col),
         type  = "scattergl",
         mode  = "lines+markers",
         marker = list(size = 4, color = "steelblue"),
-        line   = list(width = 1),
+        line   = list(width = 1, color = "gray"),
         key    = ~.rowid,
-        source = "plot"
-      ) %>%
-        layout(
-          dragmode = "zoom",
-          xaxis = list(range = xr, title = list(text = "")),
-          yaxis = list(range = yr, title = y_col)
-        ) %>%
-        event_register("plotly_selected") %>%
-        event_register("plotly_relayout")
+        source = "plot") %>%
+      layout(dragmode = "zoom",
+        xaxis = list(range = xr, title = list(text = "")),
+        yaxis = list(range = yr, title = y_col)) %>%
+      event_register("plotly_selected") %>%
+      event_register("plotly_relayout")
 
       add_pts <- function(idx, col) {
         if (!length(idx)) return(p)
@@ -169,9 +153,8 @@ qc_window_app <- function(dat,
           x = ~get(time_col), y = ~get(y_col),
           type = "scattergl", mode = "markers",
           marker = list(size = 6, color = col, opacity = 0.9),
-          inherit = FALSE, showlegend = FALSE
-        )
-      }
+          inherit = FALSE, showlegend = FALSE)}
+
       p <- add_pts(rows[dt[rows][[fcol]] == 1L], "green")
       if (!isTRUE(input$hide_bad))
         p <- add_pts(rows[dt[rows][[fcol]] < 0L], "red")
@@ -187,48 +170,35 @@ qc_window_app <- function(dat,
         "Window %d / %d   %s – %s",
         current_win + 1, length(win_rows),
         format(rng[1], "%Y-%m-%d %H:%M"),
-        format(rng[2], "%Y-%m-%d %H:%M")
-      ))
-    }
+        format(rng[2], "%Y-%m-%d %H:%M")))}
     redraw()
 
     # remember zoom
-    observeEvent(
-      event_data("plotly_relayout", source = "plot"),
-      {
+    observeEvent(event_data("plotly_relayout", source = "plot"), {
         ev <- event_data("plotly_relayout", source = "plot")
         x0 <- ev[["xaxis.range[0]"]]; x1 <- ev[["xaxis.range[1]"]]
         if (is.null(x0) || is.null(x1)) return()
         x_range <<- if (is.numeric(x0)) {
           div <- ifelse(max(abs(c(x0, x1))) > 1e12, 1000, 1)
           as.POSIXct(c(x0, x1) / div, origin = "1970-01-01", tz = tz_user)
-        } else as.POSIXct(c(x0, x1), tz = tz_user)
-      }
-    )
+        } else as.POSIXct(c(x0, x1), tz = tz_user)})
 
     # -- helper to change flags -------------------------------------------------
     set_flag <- function(ids, value) {
       if (length(ids)) {
         dt[ids, (fcol) := value]
-        redraw(TRUE)
-      }
-    }
+        redraw(TRUE)}}
 
     # -- navigation ------------------------------------------------------------
     observeEvent(input$prev_win, {
-      if (current_win > 0) { current_win <<- current_win - 1L; redraw(FALSE) }
-    })
+      if (current_win > 0) { current_win <<- current_win - 1L; redraw(FALSE) }})
     observeEvent(input$next_win, {
       if (current_win < length(win_rows) - 1L) {
-        current_win <<- current_win + 1L; redraw(FALSE)
-      }
-    })
+        current_win <<- current_win + 1L; redraw(FALSE)}})
     observeEvent(input$jump, {
       j <- input$jump - 1L
       if (!is.na(j) && j >= 0L && j < length(win_rows) && j != current_win) {
-        current_win <<- j; redraw(FALSE)
-      }
-    })
+        current_win <<- j; redraw(FALSE)}})
 
     # -- point buttons ---------------------------------------------------------
     observeEvent(input$flag_sel,    set_flag(brushed_ids(), -2L))
@@ -238,18 +208,15 @@ qc_window_app <- function(dat,
     # -- window buttons --------------------------------------------------------
     observeEvent(input$flag_win, {
       dt[rows_now(), (fcol) := -2L]
-      redraw(TRUE)
-    })
+      redraw(TRUE)})
     observeEvent(input$approve_unflagged, {
       r <- rows_now()
       good <- r[ dt[r, get(fcol) == 0L & !is.na(get(y_col))] ]
       if (length(good)) dt[good, (fcol) := 1L]
-      redraw(TRUE)
-    })
+      redraw(TRUE)})
     observeEvent(input$reset_win, {
       dt[rows_now(), (fcol) := 0L]
-      redraw(TRUE)
-    })
+      redraw(TRUE)})
 
     # approve ENTIRE & next
     observeEvent(input$approve_next, {
@@ -257,8 +224,7 @@ qc_window_app <- function(dat,
       ok <- r[!is.na(dt[[y_col]][r])]
       dt[ok, (fcol) := 1L]
       if (current_win < length(win_rows) - 1L) current_win <<- current_win + 1L
-      redraw(FALSE)
-    })
+      redraw(FALSE)})
 
     # flag selected & next
     observeEvent(input$flag_sel_next, {
@@ -268,29 +234,24 @@ qc_window_app <- function(dat,
       unchecked  <- rest[ dt[rest, get(fcol) == 0L & !is.na(get(y_col))] ]
       if (length(unchecked)) dt[unchecked, (fcol) := 1L]
       if (current_win < length(win_rows) - 1L) current_win <<- current_win + 1L
-      redraw(FALSE)
-    })
+      redraw(FALSE)})
 
-    # misc toggles
+    # other buttons
     observeEvent(input$hide_bad, redraw(TRUE))
     observeEvent(input$win_width, ignoreInit = TRUE, {
       hrs <- input$win_width
       if (is.finite(hrs) && hrs > 0) {
         win_rows <<- make_windows(hrs)
         current_win <<- min(current_win, length(win_rows) - 1L)
-        redraw(FALSE)
-      }
-    })
+        redraw(FALSE)}})
     observeEvent(input$reset_all, {
       dt[get(fcol) != -1L, (fcol) := 0L]
-      redraw(TRUE)
-    })
+      redraw(TRUE)})
 
     # done
     observeEvent(input$done, {
       dt[, c(".rowid", "win_id") := NULL]
-      stopApp(as.data.frame(dt))
-    })
+      stopApp(as.data.frame(dt))})
   }
 
   runApp(shinyApp(ui, server))
