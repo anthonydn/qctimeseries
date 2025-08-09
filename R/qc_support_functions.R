@@ -172,18 +172,37 @@ qc_progress <- function(data, quiet = FALSE, hide_complete = FALSE) {
 
 #' Copy QC flags from one variable to another
 #'
-#' @param df Data frame with flag columns (from [qc_add_flags()]).
+#' @param df Data frame/data.table with flag columns (from [qc_add_flags()]).
 #' @param from Source variable name (without suffix).
 #' @param to Destination variable name (without suffix).
-#' @param suffix Flag suffix, default `"_qcflag"`.
+#' @param suffix Flag suffix, default "_qcflag".
 #' @return The modified data frame (invisibly).
 #' @examples
 #' df <- qc_add_flags(data.frame(a=1:3, b=1:3), vars=c("a","b"))
 #' df <- qc_transfer(df, from="a", to="b")
 qc_transfer <- function(df, from, to, suffix = "_qcflag") {
-  df[[paste0(to, suffix)]] <- df[[paste0(from, suffix)]]
-  invisible(df)}
+  stopifnot(is.data.frame(df), length(from) == 1, length(to) == 1)
 
+  f_from <- paste0(from, suffix)
+  f_to   <- paste0(to,   suffix)
+  if (!f_from %in% names(df))
+    stop("qc_transfer(): flag column not found: ", f_from)
+
+  val <- df[[f_from]]
+
+  if (inherits(df, "data.table")) {
+    data.table::set(df, j = f_to, value = val)  # by reference, no copy
+  } else {
+    df[[f_to]] <- val
+  }
+
+  # keep QC attrs in sync
+  vars <- unique(c(attr(df, "qc_vars"), to))
+  attr(df, "qc_vars")   <- vars[!is.na(vars)]
+  if (is.null(attr(df, "qc_suffix"))) attr(df, "qc_suffix") <- suffix
+
+  invisible(df)
+}
 
 
 #' Apply QC flags to data (mask bad values)
