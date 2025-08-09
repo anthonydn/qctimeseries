@@ -25,3 +25,8 @@ Copy QC flags from one variable to another
 df <- qc_add_flags(data.frame(a=1:3, b=1:3), vars=c("a","b"))
 df <- qc_transfer(df, from="a", to="b")
 }
+\seealso{
+For a step-by-step guide, see the package vignette:
+\code{vignette("getting-started", package = "qctimeseries")}.
+Browse all vignettes with \code{browseVignettes("qctimeseries")}.
+}

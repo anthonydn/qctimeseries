@@ -21,3 +21,8 @@ Same class as \code{data}, with attributes updated.
 \description{
 Drop one or more \verb{*_qcflag} columns and update attributes.
 }
+\seealso{
+For a step-by-step guide, see the package vignette:
+\code{vignette("getting-started", package = "qctimeseries")}.
+Browse all vignettes with \code{browseVignettes("qctimeseries")}.
+}

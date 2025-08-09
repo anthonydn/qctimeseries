@@ -35,3 +35,8 @@ Adds attributes \code{qc_vars} and \code{qc_suffix}.
 df <- data.frame(x = c(1, NA, 3), y = 4:6)
 df_qc <- qc_add_flags(df, vars = "x")
 }
+\seealso{
+For a step-by-step guide, see the package vignette:
+\code{vignette("getting-started", package = "qctimeseries")}.
+Browse all vignettes with \code{browseVignettes("qctimeseries")}.
+}
