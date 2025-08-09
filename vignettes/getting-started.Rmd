@@ -1,0 +1,106 @@
+---
+
+title: "Getting started with qctimeseries"
+output: rmarkdown::html\_vignette
+vignette: >
+%\VignetteIndexEntry{Getting started with qctimeseries}
+%\VignetteEngine{knitr::rmarkdown}
+%\VignetteEncoding{UTF-8}
+-------------------------
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(comment = "#>", collapse = TRUE)
+```
+
+## Overview
+
+This vignette walks through the minimal workflow:
+
+1. Add QC flag columns with `qc_add_flags()`
+2. Review & flag in the interactive app `qc_window_app()`
+3. Summarize progress with `qc_progress()`
+4. (Optional) Visual check with `qc_check_plot()`
+5. Apply flags with `qc_apply_flags()`
+
+Flag encoding: `1 = approved`, `0 = unchecked`, `-2 = manual flag`, `-1 = original NA`.
+
+## Example data
+
+```{r}
+library(qctimeseries)
+
+set.seed(1)
+df <- data.frame(
+  DateTime = seq.POSIXt(as.POSIXct("2024-01-01 00:00:00", tz = "UTC"),
+                        by = "hour", length.out = 5000),
+  temp     = rnorm(5000, 20, 2),
+  hum      = rnorm(5000, 50, 5)
+)
+# introduce some missing & outliers
+df$temp[sample.int(5000, 150)] <- NA
+df$temp[sample.int(5000, 20)]  <- df$temp[sample.int(5000, 20)] + 12
+```
+
+## 1) Initialize flags
+
+```{r}
+df_qc <- qc_add_flags(df, vars = c("temp", "hum"))
+names(df_qc)
+```
+
+## 2) Interactive review
+
+Launch the app for a specific variable (e.g., `temp`). It returns the modified data when you click **Done / Return**:
+
+```r
+# Not run in vignette:
+# df_qc <- qc_window_app(df_qc, y_col = "temp", time_col = "DateTime", win_hrs = 168)
+```
+
+Notes:
+
+* Use the **Secondary** dropdown to overlay another variable (read-only).
+* **Hide flagged** hides manual/auto-flagged points on the primary plot.
+* **Home zoom** restores the window’s full x-range.
+
+## 3) Check progress
+
+```{r}
+qc_progress(df_qc)                       # per-variable percentages
+qc_progress(df_qc, hide_complete = TRUE) # show only incomplete variables
+```
+
+## 4) Visual check (optional)
+
+```{r, eval=FALSE}
+qc_check_plot(df_qc, "temp", time_col = "DateTime")
+```
+
+## 5) Apply flags
+
+Create a cleaned data frame where flagged values are masked to `NA`. Drop the flag columns if you don’t need them downstream.
+
+```{r}
+df_clean <- qc_apply_flags(df_qc, drop_flags = TRUE)
+names(df_clean)
+```
+
+## Utilities
+
+* Copy flags from one variable to another (e.g., reuse manual flags):
+
+```{r}
+df_qc <- qc_transfer(df_qc, from = "temp", to = "hum")
+```
+
+* Remove flag columns:
+
+```{r}
+df_no_flags <- qc_remove_flags(df_qc)      # remove all *_qcflag
+```
+
+## Repro settings
+
+* Windows are sized by `win_hrs` (default one week).
+* Time column defaults to `"DateTime"`; you can change with `time_col`.
+* The app returns the **entire data frame** with the updated `*_qcflag` column for the chosen `y_col`.

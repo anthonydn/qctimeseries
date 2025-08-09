@@ -30,7 +30,7 @@ place (\code{1 = approved}, \code{0 = unchecked}, \code{-2 = flagged}, \verb{-1 
 \item{tz_user}{Time zone used for display (affects x-axis labels only).}
 }
 \value{
-A \code{data.frame} identical to \code{dat} but with modified QC flag column.
+A \code{data.frame} identical to \code{dat} but with modified QC flag columns.
 }
 \description{
 Launch a Shiny app to visually inspect and flag bad data points in large

@@ -30,3 +30,4 @@ Suggests:
 LazyData: false
 URL: https://github.com/anthonydn/qctimeseries
 BugReports: https://github.com/anthonydn/qctimeseries/issues
+VignetteBuilder: knitr

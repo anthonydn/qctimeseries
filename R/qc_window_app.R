@@ -15,7 +15,7 @@
 #' @param time_col Name of the POSIXct column. Defaults to `"DateTime"`.
 #' @param tz_user Time zone used for display (affects x-axis labels only).
 #'
-#' @return A `data.frame` identical to `dat` but with modified QC flag column.
+#' @return A `data.frame` identical to `dat` but with modified QC flag columns.
 #' @export
 #' @import data.table
 #' @import shiny
@@ -30,9 +30,6 @@
 #'   )
 #'   qc_window_app(dummy, y_col = "temp")
 #' }
-
-
-
 qc_window_app <- function(dat,
                           y_col,
                           win_hrs   = 168,
@@ -44,9 +41,9 @@ qc_window_app <- function(dat,
   if (!inherits(dat[[time_col]], "POSIXct"))
     dat[[time_col]] <- as.POSIXct(dat[[time_col]], tz = tz_user)
 
-  fcol <- paste0(y_col, qc_suffix)
-  if (!fcol %in% names(dat)) stop("qc_window_app(): column '", fcol,
-    "' not found.  Create flags with qc_flags() first.")
+  if (!fcol %in% names(dat))
+    stop("qc_window_app(): column '", fcol,
+         "' not found. Create flags with qc_add_flags() first.")
 
   dt <- as.data.table(dat)
   if (!".rowid" %in% names(dt)) dt[, .rowid := .I]
