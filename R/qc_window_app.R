@@ -83,8 +83,6 @@ qc_window_app <- function(dat,
         actionButton("prev_win","Prev"),
         actionButton("next_win","Next"),
         numericInput("jump", NULL, 1, min = 1, width = "80px"),
-        #actionButton("approve_next","Approve ENTIRE & Next ▶︎",
-        #             class="btn-success"),
         actionButton("flag_sel_next",
                      "Flag Selected ➜ Approve unflagged & Next",
                      class="btn-primary"),
@@ -127,9 +125,6 @@ qc_window_app <- function(dat,
       yr_base <- range(vals, na.rm = TRUE)
       pad <- diff(yr_base) * 0.02
       yr <- if (is.null(y_range)) (yr_base + c(-pad, pad)) else y_range
-
-#      span <- diff(range(vals, na.rm = TRUE))
-#      yr   <- range(vals, na.rm = TRUE) + c(-1, 1) * 0.02 * span
 
       base_rows <- if (isTRUE(input$hide_bad))
         rows[dt[rows][[fcol]] >= 0] else rows
@@ -233,14 +228,6 @@ qc_window_app <- function(dat,
     observeEvent(input$reset_win, {
       dt[rows_now(), (fcol) := 0L]
       redraw(TRUE)})
-
-    # approve ENTIRE & next
-    observeEvent(input$approve_next, {
-      r  <- rows_now()
-      ok <- r[!is.na(dt[[y_col]][r])]
-      dt[ok, (fcol) := 1L]
-      if (current_win < length(win_rows) - 1L) current_win <<- current_win + 1L
-      redraw(FALSE)})
 
     # flag selected & next
     observeEvent(input$flag_sel_next, {
