@@ -41,6 +41,7 @@ qc_window_app <- function(dat,
   if (!inherits(dat[[time_col]], "POSIXct"))
     dat[[time_col]] <- as.POSIXct(dat[[time_col]], tz = tz_user)
 
+  fcol <- paste0(y_col, qc_suffix)
   if (!fcol %in% names(dat))
     stop("qc_window_app(): column '", fcol,
          "' not found. Create flags with qc_add_flags() first.")

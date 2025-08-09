@@ -6,46 +6,43 @@
 \alias{qctimeseries}
 \title{qctimeseries: Window-by-window QC for large time series}
 \description{
-Tools to add QC flag columns, review data in an interactive Shiny/plotly app,
+Tools to add/remove QC flag columns, review data in an interactive Shiny/plotly app,
 summarize progress, and apply flags to produce cleaned series.
 }
-\details{
-\subsection{Typical workflow}{
-\enumerate{
-\item Create flag columns: \code{\link[=qc_add_flags]{qc_add_flags()}}.
-\item Review/flag in the app: \code{\link[=qc_window_app]{qc_window_app()}} (returns modified data).
-\item Check progress: \code{\link[=qc_progress]{qc_progress()}}.
-\item (Optional) Visual check: \code{\link[=qc_check_plot]{qc_check_plot()}}.
-\item Apply flags to mask bad values: \code{\link[=qc_apply_flags]{qc_apply_flags()}}.
-\item (Optional) Remove flag cols: \code{\link[=qc_remove_flags]{qc_remove_flags()}}.
-}
+\section{Vignette (strongly recommended)}{
+
+A \emph{vignette} is a long-form tutorial with runnable examples. Read the full workflow at:
+
+\preformatted{
+  vignette("getting-started", package = "qctimeseries")
+  # or browse all vignettes:
+  browseVignettes("qctimeseries")
 }
 
-\subsection{Flag encoding}{
+If you installed without vignettes, reinstall with:
 
-\code{1 = approved}, \code{0 = unchecked}, \verb{-2 = manual flag}, \verb{-1 = original NA}.
+\preformatted{
+  remotes::install_github("anthonydn/qctimeseries", build_vignettes = TRUE)
 }
+
+(From a local clone you can also run: \code{devtools::build_vignettes()}.)
 }
+
 \section{Key functions}{
 
 \itemize{
-\item \code{\link[=qc_add_flags]{qc_add_flags()}} — initialize *_qcflag columns.
-\item \code{\link[=qc_window_app]{qc_window_app()}} — interactive QC by fixed-width windows.
-\item \code{\link[=qc_progress]{qc_progress()}} — per-variable QC completion summary.
-\item \code{\link[=qc_check_plot]{qc_check_plot()}} — quick visual (raw vs. cleaned).
-\item \code{\link[=qc_apply_flags]{qc_apply_flags()}} — mask flagged values, optionally drop flag cols.
-\item \code{\link[=qc_remove_flags]{qc_remove_flags()}} — drop flag columns.
-\item \code{\link[=qc_transfer]{qc_transfer()}} — copy flags from one var to another.
+\item \code{\link[=qc_add_flags]{qc_add_flags()}} — initialize \verb{*_qcflag} columns
+\item \code{\link[=qc_window_app]{qc_window_app()}} — interactive QC by fixed-width windows
+\item \code{\link[=qc_progress]{qc_progress()}} — per-variable QC completion summary
+\item \code{\link[=qc_check_plot]{qc_check_plot()}} — quick visual (raw vs. cleaned)
+\item \code{\link[=qc_apply_flags]{qc_apply_flags()}} — mask flagged values, optionally drop flag cols
+\item \code{\link[=qc_remove_flags]{qc_remove_flags()}} — drop flag columns
+\item \code{\link[=qc_transfer]{qc_transfer()}} — copy flags from one var to another
 }
 }
 
 \seealso{
-Useful links:
-\itemize{
-  \item \url{https://github.com/anthonydn/qctimeseries}
-  \item Report bugs at \url{https://github.com/anthonydn/qctimeseries/issues}
-}
-
+vignette("getting-started", package = "qctimeseries")
 }
 \author{
 \strong{Maintainer}: Anthony Darrouzet-Nardi \email{adarrouzetnardi@gmail.com}
