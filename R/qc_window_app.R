@@ -54,7 +54,7 @@ qc_window_app <- function(dat,
   make_windows <- function(hrs) {
     start <- min(dt[[time_col]], na.rm = TRUE)
     dt[, win_id := as.integer(
-      floor(as.numeric(difftime(DateTime, start, "secs")) / (hrs*3600)) )]
+      floor(as.numeric(difftime(get(time_col), start, "secs")) / (hrs*3600)) )]
     # initial split → list(row-ids)
     wins <- split(dt$.rowid, dt$win_id)
     # keep only windows that contain ≥1 non-NA y-value
@@ -77,9 +77,13 @@ qc_window_app <- function(dat,
     .label-inline{font-weight:bold;display:flex;align-items:center;}")),
     textOutput("win_label"),
     plotlyOutput("tsplot", height = 440),
+    plotlyOutput("secplot", height = 200),
     tags$hr(style="margin:4px 0;"),
 
     div(class="btn-row",
+        span(class="label-inline","Secondary:"),
+        selectInput("sec_var", NULL, choices = character(0), selected = NULL,
+                    width="300px"),
         actionButton("prev_win","Prev"),
         actionButton("next_win","Next"),
         numericInput("jump", NULL, 1, min = 1, width = "80px"),
@@ -106,9 +110,16 @@ qc_window_app <- function(dat,
   # --- server -----------------------------------------------------------------
   server <- function(input, output, session) {
 
+    ## ---- dropdown choices (hide qcflag cols) ----
+    sec_choices <- names(dt)
+    sec_choices <- sec_choices[!grepl(paste0(qc_suffix, "$"), sec_choices)]
+    sec_choices <- setdiff(sec_choices, c(time_col, y_col, fcol))
+    updateSelectInput(session, "sec_var",
+                      choices = c("", sec_choices), selected = "")
+
     rows_now <- function() win_rows[[as.character(current_win)]]
 
-    brushed_ids <- function() {
+      brushed_ids <- function() {
       ev <- event_data("plotly_selected", source = "plot")
       if (is.null(ev) || !nrow(ev)) integer() else as.integer(ev$key)}
 
@@ -122,9 +133,8 @@ qc_window_app <- function(dat,
       pad <- diff(yr_base) * 0.02
       yr <- if (is.null(y_range)) (yr_base + c(-pad, pad)) else y_range
 
-      base_rows <- if (isTRUE(input$hide_bad))
-        rows[dt[rows][[fcol]] >= 0] else rows
-      base_rows <- base_rows[!is.na(dt[[y_col]][base_rows])]
+      base_rows <- if (isTRUE(input$hide_bad)) rows[dt[rows][[fcol]] >= 0L] else rows
+      base_rows <- base_rows[!is.na(dt[[y_col]][base_rows]) & !is.na(dt[[time_col]][base_rows])]
 
       p <- plot_ly(dt[base_rows],
         x     = ~get(time_col),
@@ -158,11 +168,34 @@ qc_window_app <- function(dat,
       p
     }
 
+    build_sec_plot <- function(){
+      var <- input$sec_var
+      if (is.null(var) || var == "" || !(var %in% names(dt)))
+        return(plotly_empty(type = "scattergl", mode = "lines"))
+
+      rows <- rows_now()
+      good <- rows[ dt[rows][[fcol]] >= 0L & !is.na(dt[[var]][rows]) ]
+      if (!length(good)) return(plotly_empty(type = "scattergl", mode = "lines"))
+
+      xr <- if (is.null(x_range)) range(dt[[time_col]][good], na.rm=TRUE) else x_range
+
+      plot_ly(dt[good],
+              x = as.formula(paste0("~", time_col)),
+              y = ~get(var),
+              type="scattergl", mode="lines",
+              line=list(width=1,color="orange")) %>%
+        layout(dragmode="zoom",
+               xaxis=list(range=xr),
+               yaxis=list(title=var))
+      }
+
+
     redraw <- function(keep_x = TRUE, keep_y = TRUE) {
       if (!keep_x) x_range <<- NULL
       if (!keep_y) y_range <<- NULL
       updateNumericInput(session, "jump", value = current_win + 1)
       output$tsplot <- renderPlotly(build_plot())
+      output$secplot <- renderPlotly(build_sec_plot())
       rng <- range(dt[rows_now(), get(time_col)], na.rm = TRUE)
       output$win_label <- renderText(sprintf(
         "Window %d / %d   %s – %s",
