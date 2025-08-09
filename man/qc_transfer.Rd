@@ -7,7 +7,7 @@
 qc_transfer(df, from, to, suffix = "_qcflag")
 }
 \arguments{
-\item{df}{Data frame with flag columns (from \code{\link[=qc_flags]{qc_flags()}}).}
+\item{df}{Data frame with flag columns (from \code{\link[=qc_add_flags]{qc_add_flags()}}).}
 
 \item{from}{Source variable name (without suffix).}
 
@@ -22,6 +22,6 @@ The modified data frame (invisibly).
 Copy QC flags from one variable to another
 }
 \examples{
-df <- qc_flags(data.frame(a=1:3, b=1:3), vars=c("a","b"))
+df <- qc_add_flags(data.frame(a=1:3, b=1:3), vars=c("a","b"))
 df <- qc_transfer(df, from="a", to="b")
 }

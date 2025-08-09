@@ -12,37 +12,37 @@
 #' @return Same class as `data` with new integer flag columns appended.
 #' @examples
 #' df <- data.frame(x = c(1, NA, 3), y = 4:6)
-#' df_qc <- qc_flags(df, vars = "x")
-qc_flags <- function(data,
+#' df_qc <- qc_add_flags(df, vars = "x")
+qc_add_flags <- function(data,
                      vars = NULL,
                      suffix = "_qcflag",
                      overwrite = FALSE,
                      require_numeric = TRUE) {
   stopifnot(is.data.frame(data))
-  if (!nzchar(suffix)) stop("qc_flags(): `suffix` must be a non-empty string")
+  if (!nzchar(suffix)) stop("qc_add_flags(): `suffix` must be a non-empty string")
 
   # pick vars
   if (is.null(vars)) {
     vars <- names(data)[vapply(data, is.numeric, logical(1))]
-    if (!length(vars)) stop("qc_flags(): no numeric columns found; supply `vars`")
+    if (!length(vars)) stop("qc_add_flags(): no numeric columns found; supply `vars`")
   } else {
     unknown <- setdiff(vars, names(data))
     if (length(unknown))
-      stop("qc_flags(): columns not found: ", paste(unknown, collapse = ", "))
+      stop("qc_add_flags(): columns not found: ", paste(unknown, collapse = ", "))
   }
 
   # optional type check
   if (require_numeric) {
     non_num <- vars[!vapply(data[vars], is.numeric, logical(1))]
     if (length(non_num))
-      stop("qc_flags(): non-numeric vars not allowed when `require_numeric=TRUE`: ",
+      stop("qc_add_flags(): non-numeric vars not allowed when `require_numeric=TRUE`: ",
            paste(non_num, collapse = ", "))
   }
 
   flag_names <- paste0(vars, suffix)
   existing <- intersect(flag_names, names(data))
   if (length(existing) && !isTRUE(overwrite)) {
-    stop("qc_flags(): flag columns already exist: ",
+    stop("qc_add_flags(): flag columns already exist: ",
          paste(existing, collapse = ", "),
          "\nSet `overwrite=TRUE` to replace them.")
   }
@@ -74,12 +74,56 @@ qc_flags <- function(data,
   out
 }
 
+#' Remove QC flag columns
+#'
+#' Drop one or more `*_qcflag` columns and update attributes.
+#'
+#' @param data   data.frame/data.table from [qc_add_flags()].
+#' @param vars   character; base variable names to drop flags for. `NULL` = all.
+#' @param suffix flag suffix; defaults to `attr(data,"qc_suffix")` or `"_qcflag"`.
+#' @param strict error if a requested flag column is missing (default FALSE).
+#' @return Same class as `data`, with attributes updated.
+#' @export
+qc_remove_flags <- function(data, vars = NULL, suffix = NULL, strict = FALSE) {
+  stopifnot(is.data.frame(data))
+  if (is.null(suffix)) suffix <- attr(data, "qc_suffix")
+  if (is.null(suffix)) suffix <- "_qcflag"
+
+  flag_cols <- names(data)[endsWith(names(data), suffix)]
+  if (!length(flag_cols)) return(data)
+
+  target <- if (is.null(vars)) flag_cols else paste0(vars, suffix)
+  missing <- setdiff(target, names(data))
+  if (length(missing) && strict)
+    stop("qc_remove_flags(): not found: ", paste(missing, collapse = ", "))
+
+  rm_cols <- intersect(target, names(data))
+  if (!length(rm_cols)) return(data)
+
+  # remove columns, preserve class & order
+  if (inherits(data, "data.table")) {
+    out <- data.table::copy(data)
+    out[, (rm_cols) := NULL]
+  } else {
+    out <- data[, setdiff(names(data), rm_cols), drop = FALSE]
+  }
+
+  # refresh attrs from what's left
+  left_flags <- names(out)[endsWith(names(out), suffix)]
+  if (length(left_flags)) {
+    attr(out, "qc_vars")   <- sub(paste0(suffix, "$"), "", left_flags)
+    attr(out, "qc_suffix") <- suffix
+  } else {
+    attr(out, "qc_vars") <- attr(out, "qc_suffix") <- NULL
+  }
+  out
+}
 
 
 
 #' QC progress summary
 #'
-#' @param data A data.frame returned by [qc_flags()].
+#' @param data A data.frame returned by [qc_add_flags()].
 #' @param quiet If `TRUE`, return invisibly without printing.
 #' @return A tibble/data.frame with per-variable totals and percentages.
 #' @details
@@ -124,13 +168,13 @@ qc_progress <- function(data, quiet = FALSE) {
 
 #' Copy QC flags from one variable to another
 #'
-#' @param df Data frame with flag columns (from [qc_flags()]).
+#' @param df Data frame with flag columns (from [qc_add_flags()]).
 #' @param from Source variable name (without suffix).
 #' @param to Destination variable name (without suffix).
 #' @param suffix Flag suffix, default `"_qcflag"`.
 #' @return The modified data frame (invisibly).
 #' @examples
-#' df <- qc_flags(data.frame(a=1:3, b=1:3), vars=c("a","b"))
+#' df <- qc_add_flags(data.frame(a=1:3, b=1:3), vars=c("a","b"))
 #' df <- qc_transfer(df, from="a", to="b")
 qc_transfer <- function(df, from, to, suffix = "_qcflag") {
   df[[paste0(to, suffix)]] <- df[[paste0(from, suffix)]]
@@ -140,7 +184,7 @@ qc_transfer <- function(df, from, to, suffix = "_qcflag") {
 
 #' Apply QC flags to data (mask bad values)
 #'
-#' @param data Data frame produced by [qc_flags()] or [qc_window_app()].
+#' @param data Data frame produced by [qc_add_flags()] or [qc_window_app()].
 #' @param suffix Flag suffix.
 #' @param drop_flags Logical; drop `*_qcflag` columns after masking (default `TRUE`).
 #' @return Cleaned data with `flag < 0` values set to `NA`.

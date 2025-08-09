@@ -7,7 +7,7 @@
 qc_progress(data, quiet = FALSE)
 }
 \arguments{
-\item{data}{A data.frame returned by \code{\link[=qc_flags]{qc_flags()}}.}
+\item{data}{A data.frame returned by \code{\link[=qc_add_flags]{qc_add_flags()}}.}
 
 \item{quiet}{If \code{TRUE}, return invisibly without printing.}
 }

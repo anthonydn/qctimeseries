@@ -7,7 +7,7 @@
 qc_apply_flags(data, suffix = "_qcflag")
 }
 \arguments{
-\item{data}{Data frame produced by \code{\link[=qc_flags]{qc_flags()}} or \code{\link[=qc_window_app]{qc_window_app()}}.}
+\item{data}{Data frame produced by \code{\link[=qc_add_flags]{qc_add_flags()}} or \code{\link[=qc_window_app]{qc_window_app()}}.}
 
 \item{suffix}{Flag suffix.}
 
