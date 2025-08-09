@@ -243,60 +243,80 @@ qc_apply_flags <- function(data, suffix = "_qcflag", drop_flags = TRUE) {
 
 #' Quick visual QC check (raw vs cleaned)
 #'
-#' @param data Data frame with raw vars and flag columns.
-#' @param var Variable name to inspect (character).
-#' @param suffix Flag suffix.
-#' @param time_col Time column name. Default `"DateTime"`.
-#' @return A ggplot object with two panels.
+#' Plot the raw series colored by QC flag and the cleaned (masked) series below.
+#'
+#' @param data Data frame with raw variables and matching flag columns.
+#' @param var  Character, variable name to inspect (e.g., "temp").
+#' @param suffix Flag suffix used for QC columns. Default "_qcflag".
+#' @param time_col Time column name. Default "DateTime".
+#' @return A ggplot object with two vertical panels.
+#' @seealso [qc_add_flags()], [qc_apply_flags()], [qc_progress()]
 #' @examples
 #' qc_check_plot(df, "temp")
-qc_check_plot <- function(data, var, suffix = "_qcflag") {
-  stopifnot(is.data.frame(data), var %in% names(data))
+qc_check_plot <- function(data, var, suffix = "_qcflag", time_col = "DateTime") {
+  stopifnot(is.data.frame(data), length(var) == 1, is.character(var))
+  if (!time_col %in% names(data))
+    stop("qc_check_plot(): time column '", time_col, "' not found")
+  if (!var %in% names(data))
+    stop("qc_check_plot(): variable '", var, "' not found")
+
   fcol <- paste0(var, suffix)
   if (!fcol %in% names(data))
-    stop("qc_check(): flag column '", fcol, "' not found")
+    stop("qc_check_plot(): flag column '", fcol, "' not found")
 
-  # ----------------------------------------------------------------------
-  # build a tidy data.frame with one row per timestamp * per panel
-  # ----------------------------------------------------------------------
+  # tidy per-panel data
   raw_df <- data.frame(
-    DateTime = data$DateTime,
-    y        = data[[var]],
-    flag     = data[[fcol]],
-    panel    = "raw"
-  )
+    time = data[[time_col]],
+    y    = data[[var]],
+    flag = data[[fcol]],
+    panel = "raw")
   clean_df <- raw_df
-  clean_df$y[ clean_df$flag < 1 ] <- NA   # mask bad points
+  clean_df$y[clean_df$flag < 1] <- NA
   clean_df$panel <- "clean"
 
   df <- rbind(raw_df, clean_df)
+  df$panel <- factor(df$panel, levels = c("raw", "clean"))
 
-  fl <- qc_flag_levels()
+  fl <- qc_flag_levels()  # assumes you have this helper
 
-  ggplot() +
-    geom_point(data   = subset(df, panel == "raw"),
-      mapping = aes(DateTime, y, colour = factor(flag)),
-      size = 0.8, alpha = 0.9, stroke = 0) +
-    geom_line(data   = subset(df, panel == "clean"),
-      mapping = aes(DateTime, y),
-      colour = "black") +
-    scale_colour_manual(values = fl$colors, breaks = fl$levels,
-      labels = fl$labels, drop = FALSE, name = NULL) +
-    facet_grid(panel ~ ., scales = "free_y", labeller = labeller(panel =
-      c(raw   = paste(var, "(raw)"), clean = paste(var, "(clean)")))) +
-    labs(x = NULL, y = NULL,
-         title = paste("QC check for", var)) +
-    theme_bw(base_size = 10) +
-    theme(legend.position = "bottom")}
+  ggplot2::ggplot() +
+    ggplot2::geom_point(
+      data = subset(df, panel == "raw"),
+      ggplot2::aes(time, y, colour = factor(flag)),
+      size = 0.8, alpha = 0.9, stroke = 0, na.rm = TRUE) +
+    ggplot2::geom_line(
+      data = subset(df, panel == "clean"),
+      ggplot2::aes(time, y),
+      colour = "black", na.rm = TRUE) +
+    ggplot2::scale_colour_manual(
+      values = fl$colors, breaks = fl$levels, labels = fl$labels,
+      drop = FALSE, name = NULL) +
+    ggplot2::facet_grid(
+      panel ~ ., scales = "free_y",
+      labeller = ggplot2::labeller(panel = c(raw = paste(var, "(raw)"),
+        clean = paste(var, "(clean)")))) +
+    ggplot2::labs(x = NULL, y = NULL, title = paste("QC check for", var)) +
+    ggplot2::theme_bw(base_size = 10) +
+    ggplot2::theme(legend.position = "bottom")
+}
 
-qc_is_flagged_df <- function(x, suffix = "_qcflag") {
-  !is.null(attr(x, "qc_vars")) && !is.null(attr(x, "qc_suffix")) ||
-    any(endsWith(names(x), suffix))}
+#' @noRd
+#' @keywords internal
+qc_is_flagged_df <- function(x, suffix = NULL) {
+  if (!is.data.frame(x)) return(FALSE)
+  has_attrs <- !is.null(attr(x, "qc_vars")) && !is.null(attr(x, "qc_suffix"))
+  if (has_attrs) return(TRUE)
+  if (is.null(suffix)) suffix <- attr(x, "qc_suffix")
+  if (is.null(suffix)) suffix <- "_qcflag"
+  any(endsWith(names(x), suffix))
+}
 
+#' @noRd
+#' @keywords internal
 qc_flag_levels <- function() {
-  list(levels = c("1","0","-1","-2"),
-       labels = c("approved","unchecked","auto flag","manual flag"),
-       colors = c(`1`="forestgreen",`0`="steelblue",`-1`="orange",`-2`="red"))}
-
-
-
+  list(
+    levels = c("1","0","-1","-2"),
+    labels = c("approved","unchecked","auto flag","manual flag"),
+    colors = c(`1`="forestgreen", `0`="steelblue", `-1`="orange", `-2`="red")
+  )
+}
