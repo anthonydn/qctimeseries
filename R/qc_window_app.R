@@ -121,9 +121,22 @@ qc_window_app <- function(dat,
 
     rows_now <- function() win_rows[[as.character(current_win)]]
 
-      brushed_ids <- function() {
+    brushed_ids <- function() {
       ev <- event_data("plotly_selected", source = "plot")
       if (is.null(ev) || !nrow(ev)) integer() else as.integer(ev$key)}
+
+    window_xr0 <- function() {
+      hrs <- input$win_width
+      if (!is.finite(hrs) || hrs <= 0) hrs <- win_hrs
+      rows <- rows_now()
+      if (!length(rows)) return(NULL)
+      wid <- unique(dt[rows, win_id])[1]
+      start0 <- min(dt[[time_col]], na.rm = TRUE)
+      t0 <- start0 + as.difftime(wid * hrs, units = "hours")
+      t1 <- t0     + as.difftime(hrs,     units = "hours")
+      span <- as.numeric(difftime(t1, t0, units = "secs"))
+      pad  <- span * 0.02
+      c(t0 - pad, t1 + pad)}
 
     build_plot <- function() {
       rows <- rows_now()
@@ -133,11 +146,7 @@ qc_window_app <- function(dat,
       base_rows <- if (isTRUE(input$hide_bad)) rows[dt[rows][[fcol]] >= 0L] else rows
       base_rows <- base_rows[!is.na(dt[[y_col]][base_rows]) & !is.na(dt[[time_col]][base_rows])]
 
-      if (is.null(x_range)) {
-        xr0  <- range(dt[[time_col]][base_rows], na.rm = TRUE)
-        span <- as.numeric(diff(xr0), units = "secs"); xpad <- span * 0.02
-        xr   <- xr0 + c(-xpad, xpad)
-      } else xr <- x_range
+      xr <- if (is.null(x_range)) window_xr0() else x_range
 
       if (is.null(y_range)) {
         yr0  <- range(dt[[y_col]][base_rows], na.rm = TRUE)
@@ -187,11 +196,8 @@ qc_window_app <- function(dat,
       good <- rows[ dt[rows][[fcol]] >= 0L & !is.na(dt[[var]][rows]) ]
       if (!length(good)) return(plotly_empty(type = "scattergl", mode = "lines"))
 
-      if (is.null(x_range)) {
-        xr0  <- range(dt[[time_col]][good], na.rm = TRUE)
-        span <- as.numeric(diff(xr0), units = "secs")
-        pad  <- span * 0.02
-        xr   <- xr0 + c(-pad, pad)} else {xr <- x_range}
+      xr <- if (is.null(x_range)) window_xr0() else x_range
+
       plot_ly(dt[good],
               x = as.formula(paste0("~", time_col)),
               y = ~get(var),
