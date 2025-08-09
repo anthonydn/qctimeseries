@@ -209,26 +209,35 @@ qc_transfer <- function(df, from, to, suffix = "_qcflag") {
 #'
 #' @param data Data frame produced by [qc_add_flags()] or [qc_window_app()].
 #' @param suffix Flag suffix.
-#' @param drop_flags Logical; drop `*_qcflag` columns after masking (default `TRUE`).
-#' @return Cleaned data with `flag < 0` values set to `NA`.
-qc_apply_flags <- function(data, suffix = "_qcflag") {
+#' @param drop_flags Logical; drop `*_qcflag` columns after masking (default TRUE).
+#' @return Cleaned data with `flag < 0` values set to NA.
+qc_apply_flags <- function(data, suffix = "_qcflag", drop_flags = TRUE) {
   stopifnot(is.data.frame(data))
 
-  flag_cols <- grep(paste0(suffix, "$"), names(data), value = TRUE)
+  flag_cols <- names(data)[endsWith(names(data), suffix)]
   if (!length(flag_cols))
     stop("qc_apply_flags(): no columns end with '", suffix, "'")
 
-  out <- data                       # will mutate a copy
+  # work on a copy if data.table
+  out <- if (inherits(data, "data.table")) data.table::copy(data) else data
 
   for (fcol in flag_cols) {
-    var <- sub(paste0(suffix, "$"), "", fcol)   # strip suffix
-    if (!var %in% names(out)) next              # safety: flag w/o var
-    bad <- out[[fcol]] < 0L                     # TRUE where flagged
-    if (any(bad)) out[[var]][bad] <- NA
+    var <- sub(paste0(suffix, "$"), "", fcol)
+    if (!var %in% names(out)) next
+    bad <- out[[fcol]] < 0L
+    if (any(bad, na.rm = TRUE)) out[[var]][bad] <- NA
   }
 
-  out[setdiff(names(out), flag_cols)]           # drop qcflag cols
+  if (isTRUE(drop_flags)) {
+    if (inherits(out, "data.table")) {
+      out[, (flag_cols) := NULL]
+    } else {
+      out <- out[, setdiff(names(out), flag_cols), drop = FALSE]
+    }
+  }
+  out
 }
+
 
 
 
