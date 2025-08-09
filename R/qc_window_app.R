@@ -130,17 +130,20 @@ qc_window_app <- function(dat,
       wd   <- dt[rows]
       vals <- wd[[y_col]]
 
-      if (is.null(x_range)) {
-        xr0  <- range(wd[[time_col]], na.rm = TRUE)
-        span <- as.numeric(diff(xr0), units = "secs")
-        pad  <- span * 0.02
-        xr   <- xr0 + c(-pad, pad)} else { xr <- x_range}
-      yr_base <- range(vals, na.rm = TRUE)
-      pad <- diff(yr_base) * 0.02
-      yr <- if (is.null(y_range)) (yr_base + c(-pad, pad)) else y_range
-
       base_rows <- if (isTRUE(input$hide_bad)) rows[dt[rows][[fcol]] >= 0L] else rows
       base_rows <- base_rows[!is.na(dt[[y_col]][base_rows]) & !is.na(dt[[time_col]][base_rows])]
+
+      if (is.null(x_range)) {
+        xr0  <- range(dt[[time_col]][base_rows], na.rm = TRUE)
+        span <- as.numeric(diff(xr0), units = "secs"); xpad <- span * 0.02
+        xr   <- xr0 + c(-xpad, xpad)
+      } else xr <- x_range
+
+      if (is.null(y_range)) {
+        yr0  <- range(dt[[y_col]][base_rows], na.rm = TRUE)
+        ypad <- diff(yr0) * 0.02
+        yr   <- yr0 + c(-ypad, ypad)
+      } else yr <- y_range
 
       p <- plot_ly(dt[base_rows],
         x     = ~get(time_col),
