@@ -13,6 +13,7 @@
 #' @examples
 #' df <- data.frame(x = c(1, NA, 3), y = 4:6)
 #' df_qc <- qc_add_flags(df, vars = "x")
+#' @export
 qc_add_flags <- function(data,
                      vars = NULL,
                      suffix = "_qcflag",
@@ -129,6 +130,7 @@ qc_remove_flags <- function(data, vars = NULL, suffix = NULL, strict = FALSE) {
 #' @return A tibble/data.frame with per-variable totals and percentages.
 #' @details
 #' Percentages are computed over **all rows** (including missing) by default.
+#' @export
 qc_progress <- function(data, quiet = FALSE, hide_complete = FALSE) {
   vars   <- attr(data, "qc_vars")
   suffix <- attr(data, "qc_suffix")
@@ -180,6 +182,7 @@ qc_progress <- function(data, quiet = FALSE, hide_complete = FALSE) {
 #' @examples
 #' df <- qc_add_flags(data.frame(a=1:3, b=1:3), vars=c("a","b"))
 #' df <- qc_transfer(df, from="a", to="b")
+#' @export
 qc_transfer <- function(df, from, to, suffix = "_qcflag") {
   stopifnot(is.data.frame(df), length(from) == 1, length(to) == 1)
 
@@ -211,6 +214,7 @@ qc_transfer <- function(df, from, to, suffix = "_qcflag") {
 #' @param suffix Flag suffix.
 #' @param drop_flags Logical; drop `*_qcflag` columns after masking (default TRUE).
 #' @return Cleaned data with `flag < 0` values set to NA.
+#' @export
 qc_apply_flags <- function(data, suffix = "_qcflag", drop_flags = TRUE) {
   stopifnot(is.data.frame(data))
 
@@ -238,9 +242,6 @@ qc_apply_flags <- function(data, suffix = "_qcflag", drop_flags = TRUE) {
   out
 }
 
-
-
-
 #' Quick visual QC check (raw vs cleaned)
 #'
 #' Plot the raw series colored by QC flag and the cleaned (masked) series below.
@@ -253,6 +254,7 @@ qc_apply_flags <- function(data, suffix = "_qcflag", drop_flags = TRUE) {
 #' @seealso [qc_add_flags()], [qc_apply_flags()], [qc_progress()]
 #' @examples
 #' qc_check_plot(df, "temp")
+#' @export
 qc_check_plot <- function(data, var, suffix = "_qcflag", time_col = "DateTime") {
   stopifnot(is.data.frame(data), length(var) == 1, is.character(var))
   if (!time_col %in% names(data))
