@@ -106,10 +106,6 @@ qc_window_app <- function(dat,
   # --- server -----------------------------------------------------------------
   server <- function(input, output, session) {
 
-    # always return dt, even on browser close
-    session$onSessionEnded(function() {dt[, c(".rowid", "win_id") := NULL]
-      stopApp(as.data.frame(dt))})
-
     rows_now <- function() win_rows[[as.character(current_win)]]
 
     brushed_ids <- function() {
@@ -251,11 +247,13 @@ qc_window_app <- function(dat,
       dt[get(fcol) != -1L, (fcol) := 0L]
       redraw(TRUE)})
 
-    # done
-    observeEvent(input$done, {
-      dt[, c(".rowid", "win_id") := NULL]
+    # always return dt, even on browser close
+    session$onSessionEnded(function() {
+      cols <- intersect(c(".rowid","win_id"), names(dt))
+      if (length(cols)) dt[, (cols) := NULL]
       stopApp(as.data.frame(dt))})
+    # done
+    observeEvent(input$done, { session$close() })
   }
-
   runApp(shinyApp(ui, server))
 }
