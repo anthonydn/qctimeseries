@@ -52,7 +52,7 @@ qc_window_app <- function(dat,
   if (!".rowid" %in% names(dt)) dt[, .rowid := .I]
 
   make_windows <- function(hrs) {
-    start <- min(dt$DateTime, na.rm = TRUE)
+    start <- min(dt[[time_col]], na.rm = TRUE)
     dt[, win_id := as.integer(
       floor(as.numeric(difftime(DateTime, start, "secs")) / (hrs*3600)) )]
     # initial split → list(row-ids)
@@ -87,7 +87,8 @@ qc_window_app <- function(dat,
         #             class="btn-success"),
         actionButton("flag_sel_next",
                      "Flag Selected ➜ Approve unflagged & Next",
-                     class="btn-primary")),
+                     class="btn-primary"),
+        actionButton("home_zoom", "Home zoom")),
     div(class="btn-row",
         actionButton("flag_sel",   "Flag Selected Points", class="btn-danger"),
         actionButton("unflag_sel", "Unflag Selected Points"),
@@ -123,9 +124,12 @@ qc_window_app <- function(dat,
       vals <- wd[[y_col]]
 
       xr <- if (is.null(x_range)) range(wd[[time_col]], na.rm = TRUE) else x_range
+      yr_base <- range(vals, na.rm = TRUE)
+      pad <- diff(yr_base) * 0.02
+      yr <- if (is.null(y_range)) (yr_base + c(-pad, pad)) else y_range
 
-      span <- diff(range(vals, na.rm = TRUE))
-      yr   <- range(vals, na.rm = TRUE) + c(-1, 1) * 0.02 * span
+#      span <- diff(range(vals, na.rm = TRUE))
+#      yr   <- range(vals, na.rm = TRUE) + c(-1, 1) * 0.02 * span
 
       base_rows <- if (isTRUE(input$hide_bad))
         rows[dt[rows][[fcol]] >= 0] else rows
@@ -144,7 +148,8 @@ qc_window_app <- function(dat,
         xaxis = list(range = xr, title = list(text = "")),
         yaxis = list(range = yr, title = y_col)) %>%
       event_register("plotly_selected") %>%
-      event_register("plotly_relayout")
+      event_register("plotly_relayout") %>%
+      config(modeBarButtonsToRemove = c("autoScale2d", "resetScale2d"))
 
       add_pts <- function(idx, col) {
         if (!length(idx)) return(p)
@@ -161,8 +166,9 @@ qc_window_app <- function(dat,
       p
     }
 
-    redraw <- function(keep_zoom = TRUE) {
-      if (!keep_zoom) x_range <<- NULL
+    redraw <- function(keep_x = TRUE, keep_y = TRUE) {
+      if (!keep_x) x_range <<- NULL
+      if (!keep_y) y_range <<- NULL
       updateNumericInput(session, "jump", value = current_win + 1)
       output$tsplot <- renderPlotly(build_plot())
       rng <- range(dt[rows_now(), get(time_col)], na.rm = TRUE)
@@ -175,13 +181,19 @@ qc_window_app <- function(dat,
 
     # remember zoom
     observeEvent(event_data("plotly_relayout", source = "plot"), {
-        ev <- event_data("plotly_relayout", source = "plot")
-        x0 <- ev[["xaxis.range[0]"]]; x1 <- ev[["xaxis.range[1]"]]
-        if (is.null(x0) || is.null(x1)) return()
+      ev <- event_data("plotly_relayout", source = "plot")
+
+      x0 <- ev[["xaxis.range[0]"]]; x1 <- ev[["xaxis.range[1]"]]
+      if (!is.null(x0) && !is.null(x1)) {
         x_range <<- if (is.numeric(x0)) {
           div <- ifelse(max(abs(c(x0, x1))) > 1e12, 1000, 1)
           as.POSIXct(c(x0, x1) / div, origin = "1970-01-01", tz = tz_user)
-        } else as.POSIXct(c(x0, x1), tz = tz_user)})
+        } else as.POSIXct(c(x0, x1), tz = tz_user)}
+      if (isTRUE(ev[["xaxis.autorange"]])) x_range <<- NULL
+
+      y0 <- ev[["yaxis.range[0]"]]; y1 <- ev[["yaxis.range[1]"]]
+      if (!is.null(y0) && !is.null(y1)) y_range <<- as.numeric(c(y0, y1))
+      if (isTRUE(ev[["yaxis.autorange"]])) y_range <<- NULL})
 
     # -- helper to change flags -------------------------------------------------
     set_flag <- function(ids, value) {
@@ -199,6 +211,10 @@ qc_window_app <- function(dat,
       j <- input$jump - 1L
       if (!is.na(j) && j >= 0L && j < length(win_rows) && j != current_win) {
         current_win <<- j; redraw(FALSE)}})
+    observeEvent(input$home_zoom, {
+      x_range <<- NULL
+      y_range <<- NULL
+      redraw(TRUE)})
 
     # -- point buttons ---------------------------------------------------------
     observeEvent(input$flag_sel,    set_flag(brushed_ids(), -2L))
