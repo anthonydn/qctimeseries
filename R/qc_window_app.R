@@ -20,6 +20,8 @@
 #' @import data.table
 #' @import shiny
 #' @import plotly
+#' @template see-vignette
+#'
 #'
 #' @examples
 #' if (interactive()) {

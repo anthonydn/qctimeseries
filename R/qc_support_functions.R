@@ -13,6 +13,7 @@
 #' @examples
 #' df <- data.frame(x = c(1, NA, 3), y = 4:6)
 #' df_qc <- qc_add_flags(df, vars = "x")
+#' @template see-vignette
 #' @export
 qc_add_flags <- function(data,
                      vars = NULL,
@@ -84,6 +85,7 @@ qc_add_flags <- function(data,
 #' @param suffix flag suffix; defaults to `attr(data,"qc_suffix")` or `"_qcflag"`.
 #' @param strict error if a requested flag column is missing (default FALSE).
 #' @return Same class as `data`, with attributes updated.
+#' @template see-vignette
 #' @export
 qc_remove_flags <- function(data, vars = NULL, suffix = NULL, strict = FALSE) {
   stopifnot(is.data.frame(data))
@@ -130,6 +132,7 @@ qc_remove_flags <- function(data, vars = NULL, suffix = NULL, strict = FALSE) {
 #' @return A tibble/data.frame with per-variable totals and percentages.
 #' @details
 #' Percentages are computed over **all rows** (including missing) by default.
+#' @template see-vignette
 #' @export
 qc_progress <- function(data, quiet = FALSE, hide_complete = FALSE) {
   vars   <- attr(data, "qc_vars")
@@ -180,6 +183,7 @@ qc_progress <- function(data, quiet = FALSE, hide_complete = FALSE) {
 #' @examples
 #' df <- qc_add_flags(data.frame(a=1:3, b=1:3), vars=c("a","b"))
 #' df <- qc_transfer(df, from="a", to="b")
+#' @template see-vignette
 #' @export
 qc_transfer <- function(df, from, to, suffix = "_qcflag") {
   stopifnot(is.data.frame(df), length(from) == 1, length(to) == 1)
@@ -212,6 +216,7 @@ qc_transfer <- function(df, from, to, suffix = "_qcflag") {
 #' @param suffix Flag suffix.
 #' @param drop_flags Logical; drop `*_qcflag` columns after masking (default TRUE).
 #' @return Cleaned data with `flag < 0` values set to NA.
+#' @template see-vignette
 #' @export
 qc_apply_flags <- function(data, suffix = "_qcflag", drop_flags = TRUE) {
   stopifnot(is.data.frame(data))
@@ -252,6 +257,7 @@ qc_apply_flags <- function(data, suffix = "_qcflag", drop_flags = TRUE) {
 #' @seealso [qc_add_flags()], [qc_apply_flags()], [qc_progress()]
 #' @examples
 #' qc_check_plot(df, "temp")
+#' @template see-vignette
 #' @export
 qc_check_plot <- function(data, var, suffix = "_qcflag", time_col = "DateTime") {
   stopifnot(is.data.frame(data), length(var) == 1, is.character(var))
