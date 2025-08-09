@@ -7,13 +7,13 @@
 qc_transfer(df, from, to, suffix = "_qcflag")
 }
 \arguments{
-\item{df}{Data frame with flag columns (from \code{\link[=qc_add_flags]{qc_add_flags()}}).}
+\item{df}{Data frame/data.table with flag columns (from \code{\link[=qc_add_flags]{qc_add_flags()}}).}
 
 \item{from}{Source variable name (without suffix).}
 
 \item{to}{Destination variable name (without suffix).}
 
-\item{suffix}{Flag suffix, default \code{"_qcflag"}.}
+\item{suffix}{Flag suffix, default "_qcflag".}
 }
 \value{
 The modified data frame (invisibly).

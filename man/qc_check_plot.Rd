@@ -4,23 +4,26 @@
 \alias{qc_check_plot}
 \title{Quick visual QC check (raw vs cleaned)}
 \usage{
-qc_check_plot(data, var, suffix = "_qcflag")
+qc_check_plot(data, var, suffix = "_qcflag", time_col = "DateTime")
 }
 \arguments{
-\item{data}{Data frame with raw vars and flag columns.}
+\item{data}{Data frame with raw variables and matching flag columns.}
 
-\item{var}{Variable name to inspect (character).}
+\item{var}{Character, variable name to inspect (e.g., "temp").}
 
-\item{suffix}{Flag suffix.}
+\item{suffix}{Flag suffix used for QC columns. Default "_qcflag".}
 
-\item{time_col}{Time column name. Default \code{"DateTime"}.}
+\item{time_col}{Time column name. Default "DateTime".}
 }
 \value{
-A ggplot object with two panels.
+A ggplot object with two vertical panels.
 }
 \description{
-Quick visual QC check (raw vs cleaned)
+Plot the raw series colored by QC flag and the cleaned (masked) series below.
 }
 \examples{
 qc_check_plot(df, "temp")
+}
+\seealso{
+\code{\link[=qc_add_flags]{qc_add_flags()}}, \code{\link[=qc_apply_flags]{qc_apply_flags()}}, \code{\link[=qc_progress]{qc_progress()}}
 }

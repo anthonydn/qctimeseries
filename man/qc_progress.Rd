@@ -4,12 +4,14 @@
 \alias{qc_progress}
 \title{QC progress summary}
 \usage{
-qc_progress(data, quiet = FALSE)
+qc_progress(data, quiet = FALSE, hide_complete = FALSE)
 }
 \arguments{
 \item{data}{A data.frame returned by \code{\link[=qc_add_flags]{qc_add_flags()}}.}
 
 \item{quiet}{If \code{TRUE}, return invisibly without printing.}
+
+\item{hide_complete}{If \code{TRUE}, only return rows with \code{pct_checked < 100}.}
 }
 \value{
 A tibble/data.frame with per-variable totals and percentages.
@@ -19,5 +21,4 @@ QC progress summary
 }
 \details{
 Percentages are computed over \strong{all rows} (including missing) by default.
-If you prefer to compute over non-missing rows, set \code{denom = "valid"} (optional param).
 }

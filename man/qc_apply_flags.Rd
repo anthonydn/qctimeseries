@@ -4,17 +4,17 @@
 \alias{qc_apply_flags}
 \title{Apply QC flags to data (mask bad values)}
 \usage{
-qc_apply_flags(data, suffix = "_qcflag")
+qc_apply_flags(data, suffix = "_qcflag", drop_flags = TRUE)
 }
 \arguments{
 \item{data}{Data frame produced by \code{\link[=qc_add_flags]{qc_add_flags()}} or \code{\link[=qc_window_app]{qc_window_app()}}.}
 
 \item{suffix}{Flag suffix.}
 
-\item{drop_flags}{Logical; drop \verb{*_qcflag} columns after masking (default \code{TRUE}).}
+\item{drop_flags}{Logical; drop \verb{*_qcflag} columns after masking (default TRUE).}
 }
 \value{
-Cleaned data with \code{flag < 0} values set to \code{NA}.
+Cleaned data with \code{flag < 0} values set to NA.
 }
 \description{
 Apply QC flags to data (mask bad values)

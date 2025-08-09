@@ -137,8 +137,6 @@ qc_progress <- function(data, quiet = FALSE, hide_complete = FALSE) {
   if (is.null(vars) || is.null(suffix))
     stop("qc_progress(): data does not look like a qc_add_flags() result")
 
-  library(dplyr)
-
   res <- lapply(vars, function(v) {
     fcol  <- paste0(v, suffix)
     flag  <- data[[fcol]]
@@ -161,7 +159,7 @@ qc_progress <- function(data, quiet = FALSE, hide_complete = FALSE) {
       pct_missing  = round(100 * n_miss / n_all, 2)
     )
   }) |>
-    bind_rows()
+    dplyr::bind_rows()
 
   if (hide_complete) {
     res <- dplyr::filter(res, pct_checked < 100)
@@ -310,8 +308,7 @@ qc_is_flagged_df <- function(x, suffix = NULL) {
   if (has_attrs) return(TRUE)
   if (is.null(suffix)) suffix <- attr(x, "qc_suffix")
   if (is.null(suffix)) suffix <- "_qcflag"
-  any(endsWith(names(x), suffix))
-}
+  any(endsWith(names(x), suffix))}
 
 #' @noRd
 #' @keywords internal
@@ -319,6 +316,4 @@ qc_flag_levels <- function() {
   list(
     levels = c("1","0","-1","-2"),
     labels = c("approved","unchecked","auto flag","manual flag"),
-    colors = c(`1`="forestgreen", `0`="steelblue", `-1`="orange", `-2`="red")
-  )
-}
+    colors = c(`1`="forestgreen", `0`="steelblue", `-1`="orange", `-2`="red"))}
