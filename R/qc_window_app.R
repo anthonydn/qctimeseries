@@ -143,6 +143,7 @@ qc_window_app <- function(dat,
       config(modeBarButtonsToRemove = c("autoScale2d", "resetScale2d"))
 
       add_pts <- function(idx, col) {
+        idx <- idx[!is.na(dt[[y_col]][idx]) & !is.na(dt[[time_col]][idx])]
         if (!length(idx)) return(p)
         add_trace(
           p, data = dt[idx],
