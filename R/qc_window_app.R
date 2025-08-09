@@ -87,7 +87,7 @@ qc_window_app <- function(dat,
       actionButton("next_win","Next"),
       numericInput("jump", NULL, 1, min = 1, width = "80px"),
       actionButton("flag_sel_next",
-                   "Flag Selected ➜ Approve unflagged & Next",
+                   "Flag Selected & Approve Unflagged & Next ➜",
                    class="btn-primary"),
       actionButton("home_zoom", "Home zoom"),
       span(class="label-inline","Secondary:"),
@@ -107,7 +107,7 @@ qc_window_app <- function(dat,
       span(class="label-inline","Window (hrs):"),
       numericInput("win_width",NULL,win_hrs,min=1,width="90px"),
       actionButton("reset_all","Reset ALL → Unchecked"),
-      actionButton("done",     "Done / Return", class="btn-primary")))
+      actionButton("done", "Done / Return", class="btn-primary")))
 
   # --- server -----------------------------------------------------------------
   server <- function(input, output, session) {
@@ -151,10 +151,10 @@ qc_window_app <- function(dat,
         line   = list(width = 1, color = "gray"),
         key    = ~.rowid,
         source = "plot") %>%
-        layout(dragmode = "zoom",
-          xaxis = list(range = xr, title = list(text = "")),
-          yaxis = list(range = yr, title = y_col),
-          uirevision = current_win) %>%
+      layout(dragmode = "zoom",
+        xaxis = list(range = xr, title = list(text = "")),
+        yaxis = list(range = yr, title = y_col),
+        uirevision = current_win) %>%
       event_register("plotly_selected") %>%
       event_register("plotly_relayout") %>%
       config(modeBarButtonsToRemove = c("autoScale2d", "resetScale2d"))
@@ -196,7 +196,8 @@ qc_window_app <- function(dat,
               line=list(width=1,color="orange")) %>%
         layout(dragmode="zoom",
                xaxis=list(range=xr),
-               yaxis=list(title=var))
+               yaxis=list(title=var)) %>%
+        config(modeBarButtonsToRemove = c("autoScale2d", "resetScale2d"))
       }
 
     redraw <- function(keep_x = TRUE, keep_y = TRUE) {
