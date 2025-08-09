@@ -72,40 +72,42 @@ qc_window_app <- function(dat,
   # --- UI ---------------------------------------------------------------------
   ui <- fluidPage(
     tags$head(tags$style("
-    .btn-row{display:flex;justify-content:center;flex-wrap:wrap;gap:6px}
-    .btn-row .btn,.btn-row .form-control{margin:3px 4px;height:34px;}
-    .label-inline{font-weight:bold;display:flex;align-items:center;}")),
+  html, body { overflow-y: scroll; }
+  .btn-row{display:flex;justify-content:center;flex-wrap:wrap;gap:6px}
+  .btn-row .btn,.btn-row .form-control{margin:3px 4px;height:34px;}
+  .label-inline{font-weight:bold;display:flex;align-items:center;}
+  #win_label { min-height: 22px; }")),
     textOutput("win_label"),
     plotlyOutput("tsplot", height = 440),
     plotlyOutput("secplot", height = 200),
     tags$hr(style="margin:4px 0;"),
 
     div(class="btn-row",
-        span(class="label-inline","Secondary:"),
-        selectInput("sec_var", NULL, choices = character(0), selected = NULL,
-                    width="300px"),
-        actionButton("prev_win","Prev"),
-        actionButton("next_win","Next"),
-        numericInput("jump", NULL, 1, min = 1, width = "80px"),
-        actionButton("flag_sel_next",
-                     "Flag Selected ➜ Approve unflagged & Next",
-                     class="btn-primary"),
-        actionButton("home_zoom", "Home zoom")),
+      actionButton("prev_win","Prev"),
+      actionButton("next_win","Next"),
+      numericInput("jump", NULL, 1, min = 1, width = "80px"),
+      actionButton("flag_sel_next",
+                   "Flag Selected ➜ Approve unflagged & Next",
+                   class="btn-primary"),
+      actionButton("home_zoom", "Home zoom"),
+      span(class="label-inline","Secondary:"),
+      selectInput("sec_var", NULL, choices = character(0), selected = NULL,
+                  width="300px")),
     div(class="btn-row",
-        actionButton("flag_sel",   "Flag Selected Points", class="btn-danger"),
-        actionButton("unflag_sel", "Unflag Selected Points"),
-        actionButton("approve_sel","Approve Selected Points", class="btn-success")),
+      actionButton("flag_sel",   "Flag Selected Points", class="btn-danger"),
+      actionButton("unflag_sel", "Unflag Selected Points"),
+      actionButton("approve_sel","Approve Selected Points", class="btn-success")),
     div(class="btn-row",
-        actionButton("flag_win", "Flag ENTIRE Window", class="btn-danger"),
-        actionButton("approve_unflagged", "Approve ALL Unflagged", class="btn-success"),
-        actionButton("reset_win", "Reset Window → Unchecked")),
+      actionButton("flag_win", "Flag ENTIRE Window", class="btn-danger"),
+      actionButton("approve_unflagged", "Approve ALL Unflagged", class="btn-success"),
+      actionButton("reset_win", "Reset Window → Unchecked")),
     tags$hr(style="margin:4px 0;"),
     div(class="btn-row",
-        checkboxInput("hide_bad","Hide flagged (red)", FALSE),
-        span(class="label-inline","Window (hrs):"),
-        numericInput("win_width",NULL,win_hrs,min=1,width="90px"),
-        actionButton("reset_all","Reset ALL → Unchecked"),
-        actionButton("done",     "Done / Return", class="btn-primary")))
+      checkboxInput("hide_bad","Hide flagged (red)", FALSE),
+      span(class="label-inline","Window (hrs):"),
+      numericInput("win_width",NULL,win_hrs,min=1,width="90px"),
+      actionButton("reset_all","Reset ALL → Unchecked"),
+      actionButton("done",     "Done / Return", class="btn-primary")))
 
   # --- server -----------------------------------------------------------------
   server <- function(input, output, session) {
@@ -145,9 +147,10 @@ qc_window_app <- function(dat,
         line   = list(width = 1, color = "gray"),
         key    = ~.rowid,
         source = "plot") %>%
-      layout(dragmode = "zoom",
-        xaxis = list(range = xr, title = list(text = "")),
-        yaxis = list(range = yr, title = y_col)) %>%
+        layout(dragmode = "zoom",
+          xaxis = list(range = xr, title = list(text = "")),
+          yaxis = list(range = yr, title = y_col),
+          uirevision = current_win) %>%
       event_register("plotly_selected") %>%
       event_register("plotly_relayout") %>%
       config(modeBarButtonsToRemove = c("autoScale2d", "resetScale2d"))
@@ -189,23 +192,23 @@ qc_window_app <- function(dat,
                yaxis=list(title=var))
       }
 
-
     redraw <- function(keep_x = TRUE, keep_y = TRUE) {
       if (!keep_x) x_range <<- NULL
       if (!keep_y) y_range <<- NULL
       updateNumericInput(session, "jump", value = current_win + 1)
-      output$tsplot <- renderPlotly(build_plot())
       output$secplot <- renderPlotly(build_sec_plot())
+      output$tsplot  <- renderPlotly(build_plot())
       rng <- range(dt[rows_now(), get(time_col)], na.rm = TRUE)
       output$win_label <- renderText(sprintf(
         "Window %d / %d   %s – %s",
         current_win + 1, length(win_rows),
         format(rng[1], "%Y-%m-%d %H:%M"),
         format(rng[2], "%Y-%m-%d %H:%M")))}
+
     redraw()
 
     # remember zoom
-    observeEvent(event_data("plotly_relayout", source = "plot"), {
+    observeEvent(event_data("plotly_relayout", source = "plot"), ignoreInit = TRUE, {
       ev <- event_data("plotly_relayout", source = "plot")
 
       x0 <- ev[["xaxis.range[0]"]]; x1 <- ev[["xaxis.range[1]"]]
