@@ -130,7 +130,11 @@ qc_window_app <- function(dat,
       wd   <- dt[rows]
       vals <- wd[[y_col]]
 
-      xr <- if (is.null(x_range)) range(wd[[time_col]], na.rm = TRUE) else x_range
+      if (is.null(x_range)) {
+        xr0  <- range(wd[[time_col]], na.rm = TRUE)
+        span <- as.numeric(diff(xr0), units = "secs")
+        pad  <- span * 0.02
+        xr   <- xr0 + c(-pad, pad)} else { xr <- x_range}
       yr_base <- range(vals, na.rm = TRUE)
       pad <- diff(yr_base) * 0.02
       yr <- if (is.null(y_range)) (yr_base + c(-pad, pad)) else y_range
@@ -180,8 +184,11 @@ qc_window_app <- function(dat,
       good <- rows[ dt[rows][[fcol]] >= 0L & !is.na(dt[[var]][rows]) ]
       if (!length(good)) return(plotly_empty(type = "scattergl", mode = "lines"))
 
-      xr <- if (is.null(x_range)) range(dt[[time_col]][good], na.rm=TRUE) else x_range
-
+      if (is.null(x_range)) {
+        xr0  <- range(dt[[time_col]][good], na.rm = TRUE)
+        span <- as.numeric(diff(xr0), units = "secs")
+        pad  <- span * 0.02
+        xr   <- xr0 + c(-pad, pad)} else {xr <- x_range}
       plot_ly(dt[good],
               x = as.formula(paste0("~", time_col)),
               y = ~get(var),
