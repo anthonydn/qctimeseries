@@ -240,7 +240,8 @@ server <- function(input, output, session) {
       uirevision = current_win) %>%
     event_register("plotly_selected") %>%
     event_register("plotly_relayout") %>%
-    config(modeBarButtonsToRemove = c("autoScale2d", "resetScale2d"))
+    config(modeBarButtonsToRemove = c("autoScale2d","resetScale2d"),
+      scrollZoom = TRUE)
 
     add_pts <- function(idx, col) {
       idx <- idx[!is.na(dt[[y_col]][idx]) & !is.na(dt[[time_col]][idx])]
@@ -362,12 +363,6 @@ server <- function(input, output, session) {
 
   # other buttons
   observeEvent(input$hide_bad, redraw(TRUE))
-  observeEvent(input$win_width, ignoreInit = TRUE, {
-    hrs <- input$win_width
-    if (is.finite(hrs) && hrs > 0) {
-      win_rows <<- make_windows(hrs)
-      current_win <<- min(current_win, length(win_rows) - 1L)
-      redraw(FALSE)}})
   observeEvent(input$reset_all, {
     dt[get(fcol) != -1L, (fcol) := 0L]
     redraw(TRUE)})
