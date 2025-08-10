@@ -29,7 +29,7 @@
 #'     DateTime = seq.POSIXt(Sys.time(), length.out = 5000, by = "hour"),
 #'     temp     = rnorm(5000, 20, 2),
 #'     temp_qcflag = integer(5000))
-#'   qc_window_app(dummy, y_col = "temp")}
+#'   dummy <- qc_window_app(dummy, y_col = "temp")}
 qc_window_app <- function(dat,
                           y_col,
                           win_hrs   = 168,
@@ -53,16 +53,25 @@ qc_window_app <- function(dat,
   dt <- as.data.table(dat)
   if (!".rowid" %in% names(dt)) dt[, .rowid := .I]
 
-  make_windows <- function(hrs) {
+  make_windows <- function(hrs, include = c(-3L, -2L, 0L, 1L)) {
     start <- min(dt[[time_col]], na.rm = TRUE)
     dt[, win_id := as.integer(
-      floor(as.numeric(difftime(get(time_col), start, "secs")) / (hrs*3600)) )]
-    # initial split to list(row-ids)
+      floor(as.numeric(difftime(get(time_col), start, "secs")) / (hrs * 3600))
+    )]
+
     wins <- split(dt$.rowid, dt$win_id)
-    # keep only windows that contain more than one non-NA y-value
-    wins <- Filter(function(idx) any(!is.na(dt[[y_col]][idx])), wins)
+
+    # keep only windows that (a) have any non-NA y and
+    # (b) contain at least one point in one of the included categories
+    wins <- Filter(function(idx) {
+      any(!is.na(dt[[y_col]][idx])) &&
+        any(dt[[fcol]][idx] %in% include)
+    }, wins)
+
     names(wins) <- seq_along(wins) - 1L
-    wins}
+    wins
+  }
+
   win_rows <- make_windows(win_hrs)
 
 
@@ -72,13 +81,19 @@ qc_window_app <- function(dat,
   y_range     <- NULL
 
   # --- UI ---------------------------------------------------------------------
-  ui <- fluidPage(
-    tags$head(tags$style("
+  ui <- fluidPage(tags$head(tags$style(HTML("
   html, body { overflow-y: scroll; }
-  .btn-row{display:flex;justify-content:center;flex-wrap:wrap;gap:6px}
-  .btn-row .btn,.btn-row .form-control{margin:3px 4px;height:34px;}
-  .label-inline{font-weight:bold;display:flex;align-items:center;}
-  #win_label { min-height: 22px; }")),
+  .btn-row { display:flex; justify-content:center; flex-wrap:wrap; gap:6px; }
+  .btn-row .btn, .btn-row .form-control { margin:3px 4px; height:34px; }
+  .label-inline { font-weight:600; display:flex; align-items:center;
+    margin-right:8px; }
+  .filters {display:flex; justify-content:center; align-items:center;
+    flex-wrap:wrap; gap:10px 16px;}
+  .filters .control-label { font-weight:600; margin:0 6px 0 0; }
+  .filters .shiny-input-container { margin:0; }     /* tighten spacing */
+  .filters .checkbox, .filters .checkbox-inline { margin:0; }
+  .filters input[type='checkbox'] { margin-right:6px; }
+  .filters .divider { padding:0 10px; opacity:0.5; }"))),
     textOutput("win_label"),
     plotlyOutput("tsplot", height = 440),
     plotlyOutput("secplot", height = 200),
@@ -89,7 +104,7 @@ qc_window_app <- function(dat,
       actionButton("next_win","Next"),
       numericInput("jump", NULL, 1, min = 1, width = "80px"),
       actionButton("flag_sel_next",
-                   "Flag Selected & Approve Unflagged & Next ->",
+                   "Flag Selected & Approve Unflagged & Next",
                    class="btn-primary"),
       actionButton("home_zoom", "Home zoom"),
       span(class="label-inline","Secondary:"),
@@ -103,10 +118,19 @@ qc_window_app <- function(dat,
     div(class="btn-row",
       actionButton("flag_win", "Flag ENTIRE Window", class="btn-danger"),
       actionButton("approve_unflagged", "Approve ALL Unflagged", class="btn-success"),
-      actionButton("reset_win", "Reset Window -> Unchecked")),
+      actionButton("reset_win", "Reset Window to Unchecked")),
     tags$hr(style="margin:4px 0;"),
+    # UI: compact filters row
+    div(class = "filters", tags$label("Show windows containing:",
+        class = "control-label"),
+      checkboxGroupInput("show_states", label = NULL, inline = TRUE,
+        choices  = c("Unchecked" = "0", "Unsure" = "-3",
+                       "Approved"  = "1", "Flagged" = "-2"),
+        selected = c("0","-3","1","-2")),
+      span(class = "divider", "|"),
+      tags$label("Hide flagged:", class = "control-label"),
+      checkboxInput("hide_bad", label = NULL, value = FALSE, width = "auto")),
     div(class="btn-row",
-      checkboxInput("hide_bad","Hide flagged (red)", FALSE),
       span(class="label-inline","Window (hrs):"),
       numericInput("win_width",NULL,win_hrs,min=1,width="90px"),
       actionButton("reset_all","Reset ALL -> Unchecked"),
@@ -305,6 +329,26 @@ qc_window_app <- function(dat,
     observeEvent(input$reset_all, {
       dt[get(fcol) != -1L, (fcol) := 0L]
       redraw(TRUE)})
+
+    # window inclusion determination checkboxes
+    include_codes <- reactive({sel <- input$show_states
+      if (is.null(sel) || !length(sel)) c(-3L, -2L, 0L, 1L) else as.integer(sel)})
+
+    # when window width changes, recompute using current filters
+    observeEvent(input$win_width, ignoreInit = TRUE, {
+      hrs <- input$win_width
+      if (is.finite(hrs) && hrs > 0) {
+        win_rows <<- make_windows(hrs, include = include_codes())
+        current_win <<- min(current_win, max(length(win_rows) - 1L, 0L))
+        redraw(FALSE)}})
+
+    # when filters change, recompute with current width
+    observeEvent(include_codes(), {
+      hrs <- input$win_width
+      if (!is.finite(hrs) || hrs <= 0) hrs <- win_hrs
+      win_rows <<- make_windows(hrs, include = include_codes())
+      current_win <<- min(current_win, max(length(win_rows) - 1L, 0L))
+      redraw(FALSE)})
 
     # always return dt, even on browser close
     session$onSessionEnded(function() {

@@ -44,7 +44,7 @@ if (interactive()) {
     DateTime = seq.POSIXt(Sys.time(), length.out = 5000, by = "hour"),
     temp     = rnorm(5000, 20, 2),
     temp_qcflag = integer(5000))
-  qc_window_app(dummy, y_col = "temp")}
+  dummy <- qc_window_app(dummy, y_col = "temp")}
 }
 \seealso{
 For a step-by-step guide, see the package vignette:
