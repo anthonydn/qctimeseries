@@ -11,10 +11,10 @@
 #'   vignette("overall_workflow", package = "qctimeseries")
 #' }
 #'
-#' If you installed without vignettes, reinstall with:
+#' If you installed without vignettes, the vignette can be found at:
 #'
 #' \preformatted{
-#'   remotes::install_github("anthonydn/qctimeseries", build_vignettes = TRUE)
+#'   https://anthonydn.github.io/qctimeseries
 #' }
 #'
 #' @name qctimeseries

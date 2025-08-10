@@ -12,19 +12,17 @@ summarize progress, and apply flags to produce cleaned series.
 \section{Vignette}{
 
 A \emph{vignette} is a long-form tutorial with runnable examples.
-\strong{This is essentially the user manual for qctimeseries.}
+\strong{This is the user manual for qctimeseries.}
 
 \preformatted{
   vignette("overall_workflow", package = "qctimeseries")
 }
 
-If you installed without vignettes, reinstall with:
+If you installed without vignettes, the vignette can be found at:
 
 \preformatted{
-  remotes::install_github("anthonydn/qctimeseries", build_vignettes = TRUE)
+  https://anthonydn.github.io/qctimeseries
 }
-
-(From a local clone you can also run: \code{devtools::build_vignettes()}.)
 }
 
 \seealso{
