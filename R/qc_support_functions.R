@@ -256,7 +256,18 @@ qc_apply_flags <- function(data, suffix = "_qcflag", drop_flags = TRUE) {
 #' @return A ggplot object with two vertical panels.
 #' @seealso [qc_add_flags()], [qc_apply_flags()], [qc_progress()]
 #' @examples
-#' qc_check_plot(df, "temp")
+#' # Minimal example: data + flags + a couple of masked points
+#' set.seed(1)
+#' n <- 48
+#' dat <- data.frame(
+#'   time = as.POSIXct("2024-01-01 00:00:00", tz = "UTC") + seq_len(n) * 3600,
+#'   temp = sin(seq_len(n)/6) + rnorm(n, 0, 0.1))
+#' dat_qc <- qc_add_flags(dat)
+#' dat_qc$temp_qcflag <- 1  # approve all
+#' dat_qc$temp_qcflag[c(10, 20, 30)] <- -1  # mark a few as flagged
+#' qc_check_plot(dat_qc, "temp", time_col = "time")
+#' @importFrom ggplot2 ggplot geom_point geom_line scale_colour_manual
+#' @importFrom ggplot2 facet_grid labeller labs theme_bw theme aes
 #' @template see-vignette
 #' @export
 qc_check_plot <- function(data, var, suffix = "_qcflag", time_col = "DateTime") {
@@ -285,25 +296,21 @@ qc_check_plot <- function(data, var, suffix = "_qcflag", time_col = "DateTime") 
 
   fl <- qc_flag_levels()  # assumes you have this helper
 
-  ggplot2::ggplot() +
-    ggplot2::geom_point(
-      data = subset(df, panel == "raw"),
-      ggplot2::aes(time, y, colour = factor(flag)),
+  ggplot() +
+    geom_point(data = subset(df, panel == "raw"),
+      aes(time, y, colour = factor(flag)),
       size = 0.8, alpha = 0.9, stroke = 0, na.rm = TRUE) +
-    ggplot2::geom_line(
-      data = subset(df, panel == "clean"),
-      ggplot2::aes(time, y),
+    geom_line(data = subset(df, panel == "clean"),
+      aes(time, y),
       colour = "black", na.rm = TRUE) +
-    ggplot2::scale_colour_manual(
-      values = fl$colors, breaks = fl$levels, labels = fl$labels,
-      drop = FALSE, name = NULL) +
-    ggplot2::facet_grid(
-      panel ~ ., scales = "free_y",
-      labeller = ggplot2::labeller(panel = c(raw = paste(var, "(raw)"),
+    scale_colour_manual(values = fl$colors, breaks = fl$levels,
+      labels = fl$labels, drop = FALSE, name = NULL) +
+    facet_grid(panel ~ ., scales = "free_y",
+      labeller = labeller(panel = c(raw = paste(var, "(raw)"),
         clean = paste(var, "(clean)")))) +
-    ggplot2::labs(x = NULL, y = NULL, title = paste("QC check for", var)) +
-    ggplot2::theme_bw(base_size = 10) +
-    ggplot2::theme(legend.position = "bottom")
+    labs(x = NULL, y = NULL, title = paste("QC check for", var)) +
+    theme_bw(base_size = 10) +
+    theme(legend.position = "bottom")
 }
 
 #' @noRd

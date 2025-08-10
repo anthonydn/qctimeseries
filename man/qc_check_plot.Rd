@@ -22,7 +22,16 @@ A ggplot object with two vertical panels.
 Plot the raw series colored by QC flag and the cleaned (masked) series below.
 }
 \examples{
-qc_check_plot(df, "temp")
+# Minimal example: data + flags + a couple of masked points
+set.seed(1)
+n <- 48
+dat <- data.frame(
+  time = as.POSIXct("2024-01-01 00:00:00", tz = "UTC") + seq_len(n) * 3600,
+  temp = sin(seq_len(n)/6) + rnorm(n, 0, 0.1))
+dat_qc <- qc_add_flags(dat)
+dat_qc$temp_qcflag <- 1  # approve all
+dat_qc$temp_qcflag[c(10, 20, 30)] <- -1  # mark a few as flagged
+qc_check_plot(dat_qc, "temp", time_col = "time")
 }
 \seealso{
 \code{\link[=qc_add_flags]{qc_add_flags()}}, \code{\link[=qc_apply_flags]{qc_apply_flags()}}, \code{\link[=qc_progress]{qc_progress()}}

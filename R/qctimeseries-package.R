@@ -59,7 +59,13 @@
 #' - [qc_remove_flags()] — drop flag columns
 #' - [qc_transfer()] — copy flags from one var to another
 #'
-#' @seealso vignette("overall_workflow", package = "qctimeseries")
+#' qctimeseries: window-by-window QC for large time series
+#'
 #' @name qctimeseries
-#' @keywords package
+#' @docType package
+#' @seealso vignette("getting-started", package = "qctimeseries")
+#' @importFrom stats as.formula time
 "_PACKAGE"
+
+utils::globalVariables(c("panel","time","y","flag","pct_checked",".rowid","win_id"))
+

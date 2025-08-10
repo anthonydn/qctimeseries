@@ -70,13 +70,14 @@ and saves back with \code{save(...)} so work persists between sessions.
 \item \code{\link[=qc_remove_flags]{qc_remove_flags()}} — drop flag columns
 \item \code{\link[=qc_transfer]{qc_transfer()}} — copy flags from one var to another
 }
+
+qctimeseries: window-by-window QC for large time series
 }
 
 \seealso{
-vignette("overall_workflow", package = "qctimeseries")
+vignette("getting-started", package = "qctimeseries")
 }
 \author{
 \strong{Maintainer}: Anthony Darrouzet-Nardi \email{adarrouzetnardi@gmail.com}
 
 }
-\keyword{package}

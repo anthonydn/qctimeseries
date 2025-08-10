@@ -55,9 +55,9 @@ qc_window_app <- function(dat,
     start <- min(dt[[time_col]], na.rm = TRUE)
     dt[, win_id := as.integer(
       floor(as.numeric(difftime(get(time_col), start, "secs")) / (hrs*3600)) )]
-    # initial split → list(row-ids)
+    # initial split to list(row-ids)
     wins <- split(dt$.rowid, dt$win_id)
-    # keep only windows that contain ≥1 non-NA y-value
+    # keep only windows that contain more than one non-NA y-value
     wins <- Filter(function(idx) any(!is.na(dt[[y_col]][idx])), wins)
     names(wins) <- seq_along(wins) - 1L
     wins}
@@ -87,7 +87,7 @@ qc_window_app <- function(dat,
       actionButton("next_win","Next"),
       numericInput("jump", NULL, 1, min = 1, width = "80px"),
       actionButton("flag_sel_next",
-                   "Flag Selected & Approve Unflagged & Next ➜",
+                   "Flag Selected & Approve Unflagged & Next ->",
                    class="btn-primary"),
       actionButton("home_zoom", "Home zoom"),
       span(class="label-inline","Secondary:"),
@@ -100,13 +100,13 @@ qc_window_app <- function(dat,
     div(class="btn-row",
       actionButton("flag_win", "Flag ENTIRE Window", class="btn-danger"),
       actionButton("approve_unflagged", "Approve ALL Unflagged", class="btn-success"),
-      actionButton("reset_win", "Reset Window → Unchecked")),
+      actionButton("reset_win", "Reset Window -> Unchecked")),
     tags$hr(style="margin:4px 0;"),
     div(class="btn-row",
       checkboxInput("hide_bad","Hide flagged (red)", FALSE),
       span(class="label-inline","Window (hrs):"),
       numericInput("win_width",NULL,win_hrs,min=1,width="90px"),
-      actionButton("reset_all","Reset ALL → Unchecked"),
+      actionButton("reset_all","Reset ALL -> Unchecked"),
       actionButton("done", "Done / Return", class="btn-primary")))
 
   # --- server -----------------------------------------------------------------
@@ -217,7 +217,7 @@ qc_window_app <- function(dat,
       output$tsplot  <- renderPlotly(build_plot())
       rng <- range(dt[rows_now(), get(time_col)], na.rm = TRUE)
       output$win_label <- renderText(sprintf(
-        "Window %d / %d   %s – %s",
+        "Window %d / %d   %s - %s",
         current_win + 1, length(win_rows),
         format(rng[1], "%Y-%m-%d %H:%M"),
         format(rng[2], "%Y-%m-%d %H:%M")))}
