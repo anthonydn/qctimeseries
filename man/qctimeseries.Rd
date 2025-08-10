@@ -9,14 +9,13 @@
 Tools to add/remove QC flag columns, review data in an interactive Shiny/plotly app,
 summarize progress, and apply flags to produce cleaned series.
 }
-\section{Vignette (strongly recommended)}{
+\section{Vignette}{
 
-A \emph{vignette} is a long-form tutorial with runnable examples. Read the full workflow at:
+A \emph{vignette} is a long-form tutorial with runnable examples.
+\strong{This is essentially the user manual for qctimeseries.}
 
 \preformatted{
   vignette("overall_workflow", package = "qctimeseries")
-  # or browse all vignettes:
-  browseVignettes("qctimeseries")
 }
 
 If you installed without vignettes, reinstall with:
@@ -26,52 +25,6 @@ If you installed without vignettes, reinstall with:
 }
 
 (From a local clone you can also run: \code{devtools::build_vignettes()}.)
-}
-
-\section{R Markdown template (click-to-run QC)}{
-
-You can set up a simple QC environment so helpers with little to no R experience
-can review data by opening an editable R Markdown file and pressing \strong{▶ Run} on
-each chunk. The only thing they change is the variable name as they move through
-each variable that needs QC checking.
-
-\strong{One-time prep by an analyst}
-\preformatted{
-  # 1) Import your data and add QC flags
-  dat    <- read.csv("your_data.csv")      # or readxl::read_excel(...)
-  dat_qc <- qc_add_flags(dat)              # adds *_qcflag columns
-
-  # 2) Save the working object for checkers
-  save(dat_qc, file = "your_data_qc.RData")
-}
-
-\strong{Create the checker document}
-\preformatted{
-  # RStudio: File -> New File -> R Markdown -> From Template ->
-  #   "data_checker     {qctimeseries}" 
-  # or to create in working directory:
-  rmarkdown::draft("your_data_checker.Rmd",
-     template = "data-checker", package = "qctimeseries")
-}
-
-The template loads example data set \code{sat_site_qc.RData} (for which you can substitute your own data object),
-shows progress with \code{\link[=qc_progress]{qc_progress()}}, opens the app with \code{\link[=qc_window_app]{qc_window_app()}},
-and saves back with \code{save(...)} so work persists between sessions.
-}
-
-\section{Key functions}{
-
-\itemize{
-\item \code{\link[=qc_add_flags]{qc_add_flags()}} — initialize \verb{*_qcflag} columns
-\item \code{\link[=qc_window_app]{qc_window_app()}} — interactive QC by fixed-width windows
-\item \code{\link[=qc_progress]{qc_progress()}} — per-variable QC completion summary
-\item \code{\link[=qc_check_plot]{qc_check_plot()}} — quick visual (raw vs. cleaned)
-\item \code{\link[=qc_apply_flags]{qc_apply_flags()}} — mask flagged values, optionally drop flag cols
-\item \code{\link[=qc_remove_flags]{qc_remove_flags()}} — drop flag columns
-\item \code{\link[=qc_transfer]{qc_transfer()}} — copy flags from one var to another
-}
-
-qctimeseries: window-by-window QC for large time series
 }
 
 \seealso{

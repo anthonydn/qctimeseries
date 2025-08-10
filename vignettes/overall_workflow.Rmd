@@ -289,7 +289,7 @@ Selections you make (box/lasso) drive the **Flag/Approve Selected** buttons.
 
 ---
 
-## Summary
+## Summary of Workflow
 
 ```r
 # 1. Import
@@ -312,3 +312,36 @@ qc_progress(sat_site_qc, hide_complete = TRUE)
 df_clean <- qc_apply_flags(sat_site_qc, drop_flags = TRUE)
 write.csv(df_clean, "cleaned_output.csv", row.names = FALSE)
 ```
+
+## Click-to-run QC (R Markdown template)
+
+You can set up a simple QC environment so helpers with little to no R experience can review data by opening an editable R Markdown file and pressing "Run" on each chunk. The only thing they change is the variable name as they move through each variable that needs QC checking.
+
+### One-time prep by an analyst
+
+```{r, eval=FALSE}
+# 1) Import your data and add QC flags
+dat <- read.csv("your_data.csv")  # or readxl::read_excel(...)
+dat_qc <- qctimeseries::qc_add_flags(dat) # adds *_qcflag columns
+
+# 2) Save the working object for checkers
+save(dat_qc, file = "your_data_qc.RData")
+```
+
+### Create the checker document in the same folder as the saved .Rdata file
+
+```{r, eval=FALSE}
+# Via Rstudio Menu:
+# File -> New File -> R Markdown -> From Template -> "Data checker - qctimeseries"
+
+# Or create directly in your working directory:
+rmarkdown::draft("your_data_checker.Rmd",
+  template = "data-checker", package = "qctimeseries")
+```
+
+### What the template does
+
+* Loads a working object (example: `sat_site_qc.RData`; substitute your own file).
+* Shows QC progress with `qc_progress()`.
+* Launches the windowed app with `qc_window_app()`.
+* Saves work with `save(...)` so progress persists between sessions.
