@@ -189,7 +189,7 @@ qc_window_app <- function(dat,
       p <- add_pts(rows[dt[rows][[fcol]] == 1L], "green")
       if (!isTRUE(input$hide_bad))
         p <- add_pts(rows[dt[rows][[fcol]] == -2L], "red")
-        p <- add_pts(rows[dt[rows][[fcol]] == -3L], "goldenrod")
+        p <- add_pts(rows[dt[rows][[fcol]] == -3L], "gold")
       p
     }
 
