@@ -21,7 +21,9 @@ library(qctimeseries)
 src <- system.file("extdata", "sat_site_qc.RData", package = "qctimeseries")
 if (!file.exists("sat_site_qc.RData")) file.copy(src, "sat_site_qc.RData")
 load("sat_site_qc.RData")
-qc_window_app(sat_site_qc, y_col = "CO2 15cm_L (%)", time_col = "DateTime")
+qc_progress(sat_site_qc, hide_complete = TRUE)
+sat_site_qc <- qc_window_app(sat_site_qc, y_col = "away_eos_co2_flux", time_col = "DateTime")
+qc_progress(sat_site_qc, hide_complete = TRUE)
 ```
 
 ### Vignette

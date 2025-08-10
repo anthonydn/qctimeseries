@@ -31,6 +31,8 @@ place (\code{1 = approved}, \code{0 = unchecked}, \code{-2 = flagged}, \verb{-1 
 }
 \value{
 A \code{data.frame} identical to \code{dat} but with modified QC flag columns.
+
+A \code{data.frame} identical to \code{dat} but with modified QC flag columns.
 }
 \description{
 Launch a Shiny app to visually inspect and flag bad data points in large
@@ -47,8 +49,27 @@ if (interactive()) {
   )
   qc_window_app(dummy, y_col = "temp")
 }
+Interactive QC for Time-Series Windows
+
+Launch a Shiny app to visually inspect and flag bad data points in large
+numeric time-series datasets.  Data are split into fixed-width windows
+(e.g. 168 hours) so only one slice is rendered at a time, allowing smooth
+interaction even with millions of rows.
+
+if (interactive()) {
+  dummy <- data.frame(
+    DateTime = seq.POSIXt(Sys.time(), length.out = 5000, by = "hour"),
+    temp     = rnorm(5000, 20, 2),
+    temp_qcflag = integer(5000)
+  )
+  qc_window_app(dummy, y_col = "temp")
+}
 }
 \seealso{
+For a step-by-step guide, see the package vignette:
+\code{vignette("overall_workflow", package = "qctimeseries")}.
+Browse all vignettes with \code{browseVignettes("qctimeseries")}.
+
 For a step-by-step guide, see the package vignette:
 \code{vignette("overall_workflow", package = "qctimeseries")}.
 Browse all vignettes with \code{browseVignettes("qctimeseries")}.
