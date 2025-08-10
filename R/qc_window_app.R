@@ -40,8 +40,12 @@ qc_window_app <- function(dat,
                           tz_user   = "America/Denver") {
 
   # --- load ----------------------------------------------------------
-  if (!inherits(dat[[time_col]], "POSIXct"))
-    dat[[time_col]] <- as.POSIXct(dat[[time_col]], tz = tz_user)
+  if (!inherits(dat[[time_col]], "POSIXct")) {
+    cls <- paste(class(dat[[time_col]]), collapse = "/")
+    fmt <- paste0("qc_window_app(): `%s` must be POSIXct (found: %s). ",
+      "Convert before calling, e.g. dat[[\"%s\"]] <- as.POSIXct(",
+      "dat[[\"%s\"]], tz = \"UTC\") or lubridate::ymd_hms(...).")
+    stop(sprintf(fmt, time_col, cls, time_col, time_col))}
 
   fcol <- paste0(y_col, qc_suffix)
   if (!fcol %in% names(dat))
