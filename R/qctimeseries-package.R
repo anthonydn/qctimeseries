@@ -11,10 +11,10 @@
 #'   vignette("overall_workflow", package = "qctimeseries")
 #' }
 #'
-#' If you installed without vignettes, the vignette can be found at:
+#' If you installed without vignettes, the vignette can be (temporarily) found at:
 #'
 #' \preformatted{
-#'   https://anthonydn.github.io/qctimeseries
+#'   https://crustnet.org/qctimeseries/
 #' }
 #'
 #' @name qctimeseries
