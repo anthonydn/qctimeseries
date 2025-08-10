@@ -19,7 +19,6 @@
 #'
 #' @name qctimeseries
 #' @docType package
-#' @seealso vignette("overall_workflow", package = "qctimeseries")
 #' @importFrom stats as.formula time
 "_PACKAGE"
 
