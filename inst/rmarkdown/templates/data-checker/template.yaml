@@ -1,0 +1,3 @@
+name: data_checker
+description: "Editable step-by-step QC workflow for qctimeseries"
+create_dir: false
