@@ -26,7 +26,7 @@ qc_window_app(sat_site_qc)
 ### Vignette
 
 ```r
-vignette("getting-started", package = "qctimeseries")
+vignette("overall_workflow", package = "qctimeseries")
 ```
 
 ## Features
