@@ -34,7 +34,7 @@
 #'   dat_qc <- qc_add_flags(dat)              # adds *_qcflag columns
 #'
 #'   # 2) Save the working object for checkers
-#'   save(dat_qc, file = "sat_site_qc.RData")
+#'   save(dat_qc, file = "your_data_qc.RData")
 #' }
 #'
 #' **Create the checker document**
@@ -42,11 +42,11 @@
 #'   # RStudio: File -> New File -> R Markdown -> From Template ->
 #'   #   "data_checker     {qctimeseries}" 
 #'   # or to create in working directory:
-#'   rmarkdown::draft("QC_Workflow.Rmd",
+#'   rmarkdown::draft("your_data_checker.Rmd",
 #'      template = "data-checker", package = "qctimeseries")
 #' }
 #'
-#' The template loads example data set `sat_site_qc.RData` (for which you can sub in your data object), 
+#' The template loads example data set `sat_site_qc.RData` (for which you can substitute your own data object), 
 #' shows progress with [qc_progress()], opens the app with [qc_window_app()],
 #'  and saves back with `save(...)` so work persists between sessions.
 #' 
@@ -63,7 +63,7 @@
 #'
 #' @name qctimeseries
 #' @docType package
-#' @seealso vignette("getting-started", package = "qctimeseries")
+#' @seealso vignette("overall_workflow", package = "qctimeseries")
 #' @importFrom stats as.formula time
 "_PACKAGE"
 

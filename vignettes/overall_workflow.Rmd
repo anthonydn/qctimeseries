@@ -28,10 +28,11 @@ This vignette shows the end‑to‑end workflow for window‑by‑window QC of l
 ### Data requirements
 
 * A data frame or data.table.
-* One **time column** (default name: `"DateTime"`), ideally in **POSIXct**.
+* One **time column** (default name: `"DateTime"`), of class **POSIXct**.
 * One or more **numeric** variables to QC (each will get a `*_qcflag` column).
 
-If your time column isn’t POSIXct, the app will attempt to convert it for display.
+If your time column isn’t POSIXct, the app will show an error. The user should
+ensure the time column is in proper format and it should not have NA values for time.
 
 ---
 
@@ -106,16 +107,15 @@ Pick any variable with `pct_checked < 100`, then proceed to the app.
 
 ## 3) Review & flag each variable
 
-`qc_window_app()` opens an interactive graphical environment in your browser. Use the **Hide flagged** checkbox to hide flagged points; use **Home zoom** to restore the full window range; optionally pick a **Secondary** variable to overlay (read‑only).
+`qc_window_app()` opens an interactive plotly graphical environment in your browser. 
+Explanations of plotly graphical controls and the buttons and navigation are 
+at the bottom of this document, after step 6.
 
 ```{r, eval=FALSE}
 # Change y_col to the variable you are about to check
-sat_site_qc <- qc_window_app(
-  sat_site_qc,
-  y_col   = "temp",        # <- EDIT THIS
-  time_col = "DateTime",
-  win_hrs = 168             # one-week windows
-)
+sat_site_qc <- qc_window_app(sat_site_qc, time_col = "DateTime",
+  y_col   = "temp", # <- EDIT THIS
+  win_hrs = 168) # one-week windows
 ```
 
 > The app **returns** the entire data frame when you click **Done / Return**, with the `temp_qcflag` column updated in place.
@@ -289,14 +289,7 @@ Selections you make (box/lasso) drive the **Flag/Approve Selected** buttons.
 
 ---
 
-## FAQ
-
-* **My time column isn’t POSIXct—does it matter?** The app attempts to convert; you can also convert manually with `as.POSIXct(…, tz = "UTC")` before starting.
-* **What about variables with many NAs?** The default x‑range respects the configured window width; the y‑axis scales to the data in view.
-
----
-
-## Summary of workflow
+## Summary
 
 ```r
 # 1. Import
