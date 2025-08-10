@@ -12,8 +12,6 @@ remotes::install_github("anthonydn/qctimeseries")
 remotes::install_github("anthonydn/qctimeseries", build_vignettes = TRUE)
 ```
 
-> Note: Building vignettes requires rmarkdown/knitr and Pandoc (RStudio includes Pandoc). If you hit issues, omit `build_vignettes = TRUE` and read the online README for usage.
-
 ## Quick start
 
 ```r
