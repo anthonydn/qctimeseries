@@ -28,6 +28,6 @@ qc_check_plot(df, "temp")
 \code{\link[=qc_add_flags]{qc_add_flags()}}, \code{\link[=qc_apply_flags]{qc_apply_flags()}}, \code{\link[=qc_progress]{qc_progress()}}
 
 For a step-by-step guide, see the package vignette:
-\code{vignette("getting-started", package = "qctimeseries")}.
+\code{vignette("overall_workflow", package = "qctimeseries")}.
 Browse all vignettes with \code{browseVignettes("qctimeseries")}.
 }

@@ -1,0 +1,59 @@
+---
+title: "Data Checker Template"
+output: html_document
+---
+
+## 0 Setup (only on a new installation of R)
+
+```{r setup}
+# install.packages("remotes")
+# remotes::install_github("anthonydn/qctimeseries", build_vignettes = TRUE)
+```
+
+## 0.5 Instructions here:
+
+```{r instructions}
+vignette("overall_workflow", package = "qctimeseries")
+```
+
+
+## 1  Load data (run once per session - HIT PLAY BUTTON AT RIGHT TO RUN CODE "CHUNK")
+
+If you import your own data and add qc_flags (see vignette above) and save it as .Rdata, it can be imported here if it is in the same folder as this template. Tip: find and replace "sat_site" with your data set name.
+
+```{r import, message=FALSE}
+load("sat_site_qc.RData")
+```
+
+## 2  Assess data checking progress
+
+The table shows percent checked for every variable. Choose any variable that is less than 100%, then run the next chunk. If hide_complete = TRUE it will only show ones you have not completed.
+
+```{r progress}
+qc_progress(sat_site_qc, hide_complete = FALSE)
+```
+
+## 3  Check each variable
+Change `y_col` below to the variable you are about to check, then run the chunk. The QC window opens in a browser tab. You can select variable names from the progress table above and paste them here.
+
+```{r qc_window_app, warning=FALSE}
+sat_site_qc <- qc_window_app(sat_site_qc, time_col = "DateTime",
+  y_col = "CO2 15cm_L (%)") # <-- CHANGE THE VARIABLE NAME IN THE QUOTES
+```
+
+## 4  Save progress
+Run before quitting RStudio. It is also recommended to run after each cleaned variable to avoid losing progress.
+
+```{r save}
+save(sat_site_qc, file = "sat_site_qc.RData")
+```
+
+
+## 5  Overview plot of the cleaned series
+
+The unaltered data will appear on top with the qcflag codes and the final cleaned data on the bottom.
+
+```{r check_plot, warning=FALSE}
+qc_check_plot(sat_site_qc, time_col = "DateTime", "CO2 15cm_L (%)")
+```
+

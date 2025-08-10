@@ -1,0 +1,321 @@
+---
+title: "Overall workflow for qctimeseries"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Overall workflow for qctimeseries}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(comment = "#>", collapse = TRUE, message = FALSE, warning = FALSE)
+```
+
+## Overview
+
+This vignette shows the end‑to‑end workflow for window‑by‑window QC of large time‑series:
+
+1. **Bring your own data** as a data frame with a time column and numeric variables.
+2. **Initialize flag columns** with `qc_add_flags()`.
+3. **Review & flag** values interactively with `qc_window_app()`.
+4. **Save progress** to disk regularly (recommended each variable).
+5. **Summarize progress** with `qc_progress()`.
+6. **(Optional) Visual check** with `qc_check_plot()`.
+7. **Apply flags** and **export** cleaned data.
+
+**Flag encoding**: `1 = approved`, `0 = unchecked`, `-2 = manual flag`, `-1 = original NA`.
+
+### Data requirements
+
+* A data frame or data.table.
+* One **time column** (default name: `"DateTime"`), ideally in **POSIXct**.
+* One or more **numeric** variables to QC (each will get a `*_qcflag` column).
+
+If your time column isn’t POSIXct, the app will attempt to convert it for display.
+
+---
+
+## 0) Install the package (first time only)
+
+```r
+# Not run in vignette:
+# install.packages("remotes")
+# remotes::install_github("anthonydn/qctimeseries", build_vignettes = TRUE)
+```
+
+---
+
+## 1) Start or resume a session
+
+You can **resume** from prior work, or **start fresh** with your own source file.
+
+### A. Resume work
+
+```{r}
+# Loads an R object you saved earlier (see Section 5)
+# This should define an object like `sat_site_qc` in your workspace
+# load("sat_site_qc.RData")
+```
+
+### B. Start fresh: import your own data
+
+> Pick one of the examples below, then adapt paths/column names.
+
+**CSV example**
+
+```{r, eval=FALSE}
+raw <- read.csv("path/to/input.csv", stringsAsFactors = FALSE)
+# Ensure your time column exists and is POSIXct
+raw$DateTime <- as.POSIXct(raw$DateTime, tz = "UTC")
+```
+
+**Excel example (requires readxl)**
+
+```{r, eval=FALSE}
+# install.packages("readxl")
+library(readxl)
+raw <- readxl::read_excel("path/to/input.xlsx", sheet = 1)
+raw$DateTime <- as.POSIXct(raw$DateTime, tz = "UTC")
+```
+
+Initialize QC flags for the variables you plan to review (choose a subset or all numeric):
+
+```{r, eval=FALSE}
+library(qctimeseries)
+
+# Choose variables explicitly (recommended)
+vars_to_qc <- c("temp", "hum")
+# or: vars_to_qc <- names(raw)[sapply(raw, is.numeric)]
+
+sat_site_qc <- qc_add_flags(raw, vars = vars_to_qc)
+```
+
+---
+
+## 2) Assess data checking progress
+
+`qc_progress()` reports per‑variable completion. Use `hide_complete = TRUE` to focus on what remains.
+
+```{r, eval=FALSE}
+qc_progress(sat_site_qc, hide_complete = FALSE)
+```
+
+Pick any variable with `pct_checked < 100`, then proceed to the app.
+
+---
+
+## 3) Review & flag each variable
+
+`qc_window_app()` opens an interactive graphical environment in your browser. Use the **Hide flagged** checkbox to hide flagged points; use **Home zoom** to restore the full window range; optionally pick a **Secondary** variable to overlay (read‑only).
+
+```{r, eval=FALSE}
+# Change y_col to the variable you are about to check
+sat_site_qc <- qc_window_app(
+  sat_site_qc,
+  y_col   = "temp",        # <- EDIT THIS
+  time_col = "DateTime",
+  win_hrs = 168             # one-week windows
+)
+```
+
+> The app **returns** the entire data frame when you click **Done / Return**, with the `temp_qcflag` column updated in place.
+
+**Tip:** it’s common to work through variables one by one: run the app, finish a variable, save (next section), then move to the next variable.
+
+**Warning:** When you hide flagged variables, they can still sometimes have flags changed if for example you click "Reset Window → Unchecked" thus it is a good idea to turn them back on to check before you are done working on that window.
+
+---
+
+## 4) Save progress (strongly recommended)
+
+Save after each variable and before quitting RStudio, so you can resume later.
+
+```{r, eval=FALSE}
+save(sat_site_qc, file = "sat_site_qc.RData")
+```
+
+Next session, `load("sat_site_qc.RData")` and continue.
+
+---
+
+## 5) Optional: Visual overview of a cleaned series
+
+```{r, eval=FALSE}
+qc_check_plot(sat_site_qc, "temp", time_col = "DateTime")
+```
+
+---
+
+## 6) Apply flags and export cleaned data
+
+When you’re done, mask flagged values (set to `NA`) and, if you like, drop flag columns.
+
+```{r, eval=FALSE}
+df_clean <- qc_apply_flags(sat_site_qc, drop_flags = TRUE)
+```
+
+**Export**
+
+CSV (always available):
+
+```{r, eval=FALSE}
+write.csv(df_clean, "cleaned_output.csv", row.names = FALSE)
+```
+
+Excel (requires a writer; two options):
+
+```{r, eval=FALSE}
+# Option A: writexl (simple)
+# install.packages("writexl")
+writexl::write_xlsx(df_clean, "cleaned_output.xlsx")
+
+# Option B: openxlsx (more control)
+# install.packages("openxlsx")
+openxlsx::write.xlsx(df_clean, "cleaned_output.xlsx")
+```
+
+---
+
+## Plotly controls (modebar) used in the app
+
+> Note: the app removes Plotly’s **Autoscale** and **Reset axes** buttons. Use the app’s **Home zoom** button to restore the default x‑range for the current window.
+
+| Button (icon)        | What it does                                                  |
+| -------------------- | ------------------------------------------------------------- |
+| Pan                  | Drag to move along x/y without changing zoom.                 |
+| Zoom                 | Drag to draw a zoom box on x/y.                               |
+| Box Select           | Select points in a rectangle (used for flag/approve actions). |
+| Lasso Select         | Freehand select points.                                       |
+| Zoom In / Zoom Out   | Incremental zoom.                                             |
+| Toggle Spike Lines   | Show crosshair spikes on hover.                               |
+| Download plot as PNG | Save the current view as a PNG image.                         |
+
+Selections you make (box/lasso) drive the **Flag/Approve Selected** buttons.
+
+---
+
+## App controls (buttons & inputs)
+
+> Selections are made with Plotly **Box Select** or **Lasso Select** tools; the “Selected” actions below operate on those points.
+
+<style>
+.qc-controls table { table-layout: fixed; width: 100%; }
+.qc-controls th:first-child { width: 30%; }
+.qc-controls td, .qc-controls th { white-space: normal; word-break: break-word; }
+</style>
+
+<table class="qc-controls">
+<thead><tr><th>Control</th><th>What it does</th></tr></thead><tbody><tr><td><strong>
+  Prev / Next
+</strong></td><td>
+  Move to the previous/next time window.
+
+</td></tr><tr><td><strong>
+  Window number box
+</strong></td><td>
+  Displays current window. Target window numbers can also be entered.
+
+</td></tr><tr><td><strong>
+  Flag Selected &amp; Approve Unflagged &amp; Next ➜ (Blue)
+</strong></td><td>
+  Flag selected points (<code>-2</code>), approve all other <strong>unchecked &amp; non-missing</strong> points in the current window (<code>1</code>), then advance to the next window. This is the workhorse button and is built for speedy checking. If the window looks good, click it. If there are a couple bad points, you can select them with box or lasso and then click it to flag those and go to the next. It will not reverse any already flagged points.
+
+</td></tr><tr><td><strong>
+  Home zoom
+</strong></td><td>
+  Restore the default x-range for the current window and re-autoscale y.
+
+</td></tr><tr><td><strong>
+  Secondary (dropdown)
+</strong></td><td>
+  Display a secondary variable (orange line) beneath the main plot; respects <strong>Hide flagged</strong>.
+</td></tr>
+
+<tr><td><strong>
+  Flag Selected Points
+</strong></td><td>
+  Set selected points’ flag to <code>-2</code> (manual flag).
+
+</td></tr><tr><td><strong>
+  Unflag Selected Points
+</strong></td><td>
+  Set selected points’ flag to <code>0</code> (unchecked).
+</td></tr>
+
+<tr><td><strong>
+  Approve Selected Points
+</strong></td><td>
+  Set selected points’ flag to <code>1</code> (approved).
+
+</td></tr><tr><td><strong>
+  Flag ENTIRE Window
+</strong></td><td>
+  Set <strong>all</strong> rows in the current window to <code>-2</code>.
+</td></tr>
+
+<tr><td><strong>
+  Approve ALL Unflagged
+</strong></td><td>
+  Set <strong>unchecked &amp; non-missing</strong> rows in the current window to <code>1</code>.
+
+</td></tr><tr><td><strong>
+  Reset Window → Unchecked
+</strong></td><td>
+  Set all rows’ flags in the window to <code>0</code> (original NAs remain <code>-1</code>).
+
+</td></tr><tr><td><strong>
+  Hide flagged (red)
+</strong></td><td>
+  Hide flagged points on the primary plot; secondary plot also omits flagged rows.
+
+</td></tr><tr><td><strong>
+  Window (hrs)
+</strong></td><td>
+  Re-define window width (hours) and recompute windowing.
+
+</td></tr><tr><td><strong>
+  Reset ALL → Unchecked
+</strong></td><td>
+  Set <strong>all</strong> flags to <code>0</code> except original NAs (<code>-1</code>).
+
+</td></tr><tr><td><strong>
+  Done / Return
+</strong></td><td>
+  Close the app and return the entire data frame with updated <code>*_qcflag</code> for the active <code>y_col</code>.
+</td></tr>
+
+</tbody>
+</table>
+
+---
+
+## FAQ
+
+* **My time column isn’t POSIXct—does it matter?** The app attempts to convert; you can also convert manually with `as.POSIXct(…, tz = "UTC")` before starting.
+* **What about variables with many NAs?** The default x‑range respects the configured window width; the y‑axis scales to the data in view.
+
+---
+
+## Summary of workflow
+
+```r
+# 1. Import
+raw <- read.csv("path/to/input.csv", stringsAsFactors = FALSE)
+raw$DateTime <- as.POSIXct(raw$DateTime, tz = "UTC")
+
+# 2. Add QC flags
+vars_to_qc <- c("temp", "hum")
+sat_site_qc <- qc_add_flags(raw, vars = vars_to_qc)
+
+# 3. Work variable by variable
+sat_site_qc <- qc_window_app(sat_site_qc, y_col = "temp", time_col = "DateTime")
+save(sat_site_qc, file = "sat_site_qc.RData")
+
+# 4. Progress and optional plot
+qc_progress(sat_site_qc, hide_complete = TRUE)
+# qc_check_plot(sat_site_qc, "temp", time_col = "DateTime")
+
+# 5. Apply and export
+df_clean <- qc_apply_flags(sat_site_qc, drop_flags = TRUE)
+write.csv(df_clean, "cleaned_output.csv", row.names = FALSE)
+```

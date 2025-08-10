@@ -14,7 +14,7 @@ summarize progress, and apply flags to produce cleaned series.
 A \emph{vignette} is a long-form tutorial with runnable examples. Read the full workflow at:
 
 \preformatted{
-  vignette("getting-started", package = "qctimeseries")
+  vignette("overall_workflow", package = "qctimeseries")
   # or browse all vignettes:
   browseVignettes("qctimeseries")
 }
@@ -26,6 +26,37 @@ If you installed without vignettes, reinstall with:
 }
 
 (From a local clone you can also run: \code{devtools::build_vignettes()}.)
+}
+
+\section{R Markdown template (click-to-run QC)}{
+
+You can set up a simple QC environment so helpers with little to no R experience
+can review data by opening an editable R Markdown file and pressing \strong{▶ Run} on
+each chunk. The only thing they change is the variable name as they move through
+each variable that needs QC checking.
+
+\strong{One-time prep by an analyst}
+\preformatted{
+  # 1) Import your data and add QC flags
+  dat    <- read.csv("your_data.csv")      # or readxl::read_excel(...)
+  dat_qc <- qc_add_flags(dat)              # adds *_qcflag columns
+
+  # 2) Save the working object for checkers
+  save(dat_qc, file = "sat_site_qc.RData")
+}
+
+\strong{Create the checker document}
+\preformatted{
+  # RStudio: File -> New File -> R Markdown -> From Template ->
+  #   "data_checker     {qctimeseries}" 
+  # or to create in working directory:
+  rmarkdown::draft("QC_Workflow.Rmd",
+     template = "data-checker", package = "qctimeseries")
+}
+
+The template loads example data set \code{sat_site_qc.RData} (for which you can sub in your data object),
+shows progress with \code{\link[=qc_progress]{qc_progress()}}, opens the app with \code{\link[=qc_window_app]{qc_window_app()}},
+and saves back with \code{save(...)} so work persists between sessions.
 }
 
 \section{Key functions}{
@@ -42,7 +73,7 @@ If you installed without vignettes, reinstall with:
 }
 
 \seealso{
-vignette("getting-started", package = "qctimeseries")
+vignette("overall_workflow", package = "qctimeseries")
 }
 \author{
 \strong{Maintainer}: Anthony Darrouzet-Nardi \email{adarrouzetnardi@gmail.com}
