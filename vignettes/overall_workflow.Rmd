@@ -23,7 +23,7 @@ This vignette shows the end‑to‑end workflow for window‑by‑window QC of l
 6. **(Optional) Visual check** with `qc_check_plot()`.
 7. **Apply flags** and **export** cleaned data.
 
-**Flag encoding**: `1 = approved`, `0 = unchecked`, `-2 = manual flag`, `-1 = original NA`.
+**Flag encoding**: `1 = approved`, `0 = unchecked`, `-1 = original NA`, `-2 = manual flag`, `-3 = unsure`.
 
 ### Data requirements
 
