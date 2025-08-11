@@ -30,6 +30,8 @@ qc_progress(sat_site_qc, hide_complete = TRUE)
 
 ```r
 vignette("overall_workflow", package = "qctimeseries")
+
+https://crustnet.org/qctimeseries/articles/overall_workflow.html
 ```
 
 ## Features
