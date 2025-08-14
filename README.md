@@ -36,6 +36,9 @@ ibutton_example_qc <- qc_window_app(ibutton_example_qc,
 ```r
 vignette("overall_workflow", package = "qctimeseries")
 
+Online here:
+<a href = "http://anthony.darrouzet-nardi.net/qctimeseries/">http://anthony.darrouzet-nardi.net/qctimeseries/</a>
+
 ```
 
 ## Features
