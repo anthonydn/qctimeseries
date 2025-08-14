@@ -21,12 +21,11 @@ remotes::install_github("anthonydn/qctimeseries", build_vignettes = TRUE)
 library(qctimeseries)
 
 # Try the app on the included example data
-src <- system.file("extdata", "ibutton_example_qc.RData", package = "qctimeseries")
-if (!file.exists("ibutton_example_qc.RData")) file.copy(src, "ibutton_example_qc.RData")
-load("ibutton_example_qc.RData")
-qc_progress(ibutton_example_qc, hide_complete = TRUE)
-ibutton_example_qc <- qc_window_app(ibutton_example_qc, y_col = "away_eos_co2_flux", time_col = "DateTime")
-qc_progress(ibutton_example_qc, hide_complete = TRUE)
+load(system.file("extdata", "ibutton_example_qc.RData", package = "qctimeseries"))
+
+qc_progress(ibutton_example_qc, hide_complete = FALSE)
+
+ibutton_example_qc <- qc_window_app(ibutton_example_qc, y_col = "temp", time_col = "datetime")
 ```
 
 ### Vignette
