@@ -27,14 +27,15 @@ qc_progress(ibutton_example_qc, hide_complete = FALSE)
 
 ibutton_example_qc <- qc_window_app(ibutton_example_qc, 
   y_col = "temp", time_col = "datetime", win_hrs = 10000)
+# nuke those high temps when the ibutton was taken back to the lab!
+# see vignette below for how to use it 
 ```
 
-### Vignette
+### Vignette (user manual)
 
 ```r
 vignette("overall_workflow", package = "qctimeseries")
 
-https://crustnet.org/qctimeseries/articles/overall_workflow.html
 ```
 
 ## Features
