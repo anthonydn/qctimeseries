@@ -8,7 +8,7 @@ Window-by-window QC for large time series. Review flags in a Shiny/plotly app, t
 
 # install.packages("remotes")
 
-# minimal (fastest; user manual vignette available on web)
+# minimal (fastest; user manual vignette available online; link below)
 remotes::install_github("anthonydn/qctimeseries")
 
 # full (allows access to vignette locally)
@@ -37,7 +37,8 @@ ibutton_example_qc <- qc_window_app(ibutton_example_qc,
 vignette("overall_workflow", package = "qctimeseries")
 ```
 
-Online here: http://anthony.darrouzet-nardi.net/qctimeseries/
+Online here: <a href="https://anthony.darrouzet-nardi.net/qctimeseries/"
+target="_blank" rel="noopener">anthony.darrouzet-nardi.net/qctimeseries</a>
 
 
 ## Features
