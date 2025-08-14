@@ -25,7 +25,8 @@ load(system.file("extdata", "ibutton_example_qc.RData", package = "qctimeseries"
 
 qc_progress(ibutton_example_qc, hide_complete = FALSE)
 
-ibutton_example_qc <- qc_window_app(ibutton_example_qc, y_col = "temp", time_col = "datetime")
+ibutton_example_qc <- qc_window_app(ibutton_example_qc, 
+  y_col = "temp", time_col = "datetime", win_hrs = 10000)
 ```
 
 ### Vignette
