@@ -4,12 +4,12 @@
 \alias{qc_check_plot}
 \title{Quick visual QC check (raw vs cleaned)}
 \usage{
-qc_check_plot(data, var, suffix = "_qcflag", time_col = "DateTime")
+qc_check_plot(data, y_col, suffix = "_qcflag", time_col = "DateTime")
 }
 \arguments{
 \item{data}{Data frame with raw variables and matching flag columns.}
 
-\item{var}{Character, variable name to inspect (e.g., "temp").}
+\item{y_col}{Character, variable name to inspect (e.g., "temp").}
 
 \item{suffix}{Flag suffix used for QC columns. Default "_qcflag".}
 

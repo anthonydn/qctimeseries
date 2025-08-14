@@ -29,7 +29,6 @@ If you installed without vignettes, the vignette can be (temporarily) found at:
 Useful links:
 \itemize{
   \item \url{https://github.com/anthonydn/qctimeseries}
-  \item \url{http://crustnet.org/qctimeseries/}
   \item Report bugs at \url{https://github.com/anthonydn/qctimeseries/issues}
 }
 

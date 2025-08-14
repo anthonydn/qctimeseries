@@ -15,7 +15,7 @@ knitr::opts_chunk$set(comment = "#>", collapse = TRUE, message = FALSE, warning 
 
 This vignette shows the end‑to‑end workflow for window‑by‑window QC of large time‑series:
 
-1. **Bring your own data** as a data frame with a time column and numeric variables.
+1. **Import your own data** as a data frame with a time column and numeric variables.
 2. **Initialize flag columns** with `qc_add_flags()`.
 3. **Review & flag** values interactively with `qc_window_app()`.
 4. **Save progress** to disk regularly (recommended each variable).
@@ -54,41 +54,39 @@ You can **resume** from prior work, or **start fresh** with your own source file
 
 ```{r}
 # Loads an R object you saved earlier (see Section 5)
-# This should define an object like `sat_site_qc` in your workspace
-# load("sat_site_qc.RData")
+# This should define an object like `ibutton_example_qc` in your workspace
+# load("ibutton_example_qc.RData")
 ```
 
-### B. Start fresh: import your own data
+### B. Import new data
 
-> Pick one of the examples below, then adapt paths/column names.
+A .csv example with online data is shown, but any import function (e.g., write_excel) can be used as you set up.
 
 **CSV example**
 
 ```{r, eval=FALSE}
-raw <- read.csv("path/to/input.csv", stringsAsFactors = FALSE)
-# Ensure your time column exists and is POSIXct
-raw$DateTime <- as.POSIXct(raw$DateTime, tz = "UTC")
+ibutton_example <- read.csv(
+  "https://raw.githubusercontent.com/anthonydn/snowmelt_belowground/master/data/ibuttons.csv")
+
+# subset rows
+ibutton_example <- ibutton_example[
+  ibutton_example$block == 1 &
+  ibutton_example$treatment == "C.N" &
+  ibutton_example$tussock == "I",]
+
+# convert datetime to POSIXct
+ibutton_example$datetime <- as.POSIXct(ibutton_example$datetime)
+
+# keep only the columns you want
+ibutton_example <- ibutton_example[, c("datetime", "temp")]
 ```
 
-**Excel example (requires readxl)**
+**Add QC flags**
+
+Next, add QC flags for the variables you plan to review. Choose variables using the `vars` argument. In this example, there is only one, but you can choose multiple with `vars = c("var1", "var2")`, etc. The default is all numeric variables.
 
 ```{r, eval=FALSE}
-# install.packages("readxl")
-library(readxl)
-raw <- readxl::read_excel("path/to/input.xlsx", sheet = 1)
-raw$DateTime <- as.POSIXct(raw$DateTime, tz = "UTC")
-```
-
-Initialize QC flags for the variables you plan to review (choose a subset or all numeric):
-
-```{r, eval=FALSE}
-library(qctimeseries)
-
-# Choose variables explicitly (recommended)
-vars_to_qc <- c("temp", "hum")
-# or: vars_to_qc <- names(raw)[sapply(raw, is.numeric)]
-
-sat_site_qc <- qc_add_flags(raw, vars = vars_to_qc)
+ibutton_example_qc <- qc_add_flags(ibutton_example, vars = "temp")
 ```
 
 ---
@@ -98,7 +96,7 @@ sat_site_qc <- qc_add_flags(raw, vars = vars_to_qc)
 `qc_progress()` reports per‑variable completion. Use `hide_complete = TRUE` to focus on what remains.
 
 ```{r, eval=FALSE}
-qc_progress(sat_site_qc, hide_complete = FALSE)
+qc_progress(ibutton_example_qc, hide_complete = FALSE)
 ```
 
 Pick any variable with `pct_checked < 100`, then proceed to the app.
@@ -107,18 +105,18 @@ Pick any variable with `pct_checked < 100`, then proceed to the app.
 
 ## 3) Review & flag each variable
 
-`qc_window_app()` opens an interactive plotly graphical environment in your browser. 
+`qc_window_app()` opens an interactive plotly graphical environment. 
 Explanations of plotly graphical controls and the buttons and navigation are 
 at the bottom of this document, after step 6.
 
 ```{r, eval=FALSE}
 # Change y_col to the variable you are about to check
-sat_site_qc <- qc_window_app(sat_site_qc, time_col = "DateTime",
+ibutton_example_qc <- qc_window_app(ibutton_example_qc, time_col = "datetime",
   y_col   = "temp", # <- EDIT THIS
-  win_hrs = 168) # one-week windows
+  win_hrs = 10000) # default is 168 (one-week windows)
 ```
 
-> The app **returns** the entire data frame when you click **Done / Return**, with the `temp_qcflag` column updated in place.
+> The app **returns** the entire data frame when you click **Done / Return**, with the `temp_qcflag` column updated in place. Thus to record work done in the app, it must be assigned to an object, typically the same as the input data frame, but it could also be a new copy like `ibutton_example_qc_copy`
 
 **Tip:** it’s common to work through variables one by one: run the app, finish a variable, save (next section), then move to the next variable.
 
@@ -126,22 +124,22 @@ sat_site_qc <- qc_window_app(sat_site_qc, time_col = "DateTime",
 
 ---
 
-## 4) Save progress (strongly recommended)
+## 4) Save progress (recommended after each window app session)
 
 Save after each variable and before quitting RStudio, so you can resume later.
 
 ```{r, eval=FALSE}
-save(sat_site_qc, file = "sat_site_qc.RData")
+save(ibutton_example_qc, file = "ibutton_example_qc.RData")
 ```
 
-Next session, `load("sat_site_qc.RData")` and continue.
+Next session, `load("ibutton_example_qc.RData")` and continue.
 
 ---
 
 ## 5) Optional: Visual overview of a cleaned series
 
 ```{r, eval=FALSE}
-qc_check_plot(sat_site_qc, "temp", time_col = "DateTime")
+qc_check_plot(ibutton_example_qc, "temp", time_col = "DateTime")
 ```
 
 ---
@@ -151,7 +149,7 @@ qc_check_plot(sat_site_qc, "temp", time_col = "DateTime")
 When you’re done, mask flagged values (set to `NA`) and, if you like, drop flag columns.
 
 ```{r, eval=FALSE}
-df_clean <- qc_apply_flags(sat_site_qc, drop_flags = TRUE)
+df_clean <- qc_apply_flags(ibutton_example_qc, drop_flags = TRUE)
 ```
 
 **Export**
@@ -293,24 +291,24 @@ Selections you make (box/lasso) drive the **Flag/Approve Selected** buttons.
 
 ```r
 # 1. Import
-raw <- read.csv("path/to/input.csv", stringsAsFactors = FALSE)
-raw$DateTime <- as.POSIXct(raw$DateTime, tz = "UTC")
+data <- read.csv("path/to/input.csv", stringsAsFactors = FALSE)
+data$DateTime <- as.POSIXct(data$DateTime, tz = "UTC")
 
 # 2. Add QC flags
 vars_to_qc <- c("temp", "hum")
-sat_site_qc <- qc_add_flags(raw, vars = vars_to_qc)
+data_qc <- qc_add_flags(data, vars = vars_to_qc)
 
 # 3. Work variable by variable
-sat_site_qc <- qc_window_app(sat_site_qc, y_col = "temp", time_col = "DateTime")
-save(sat_site_qc, file = "sat_site_qc.RData")
+data_qc <- qc_window_app(data_qc, y_col = "temp", time_col = "DateTime")
+save(data_qc, file = "data_qc.RData")
 
 # 4. Progress and optional plot
-qc_progress(sat_site_qc, hide_complete = TRUE)
-# qc_check_plot(sat_site_qc, "temp", time_col = "DateTime")
+qc_progress(data_qc, hide_complete = TRUE)
+# qc_check_plot(data_qc, "temp", time_col = "DateTime")
 
 # 5. Apply and export
-df_clean <- qc_apply_flags(sat_site_qc, drop_flags = TRUE)
-write.csv(df_clean, "cleaned_output.csv", row.names = FALSE)
+data_clean <- qc_apply_flags(data_qc, drop_flags = TRUE)
+write.csv(data_clean, "data_clean.csv", row.names = FALSE)
 ```
 
 ## Click-to-run QC (R Markdown template)
@@ -341,7 +339,7 @@ rmarkdown::draft("your_data_checker.Rmd",
 
 ### What the template does
 
-* Loads a working object (example: `sat_site_qc.RData`; substitute your own file).
+* Loads a working object (example: `ibutton_example_qc.RData`; substitute your own file).
 * Shows QC progress with `qc_progress()`.
 * Launches the windowed app with `qc_window_app()`.
 * Saves work with `save(...)` so progress persists between sessions.

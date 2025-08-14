@@ -250,7 +250,7 @@ qc_apply_flags <- function(data, suffix = "_qcflag", drop_flags = TRUE) {
 #' Plot the raw series colored by QC flag and the cleaned (masked) series below.
 #'
 #' @param data Data frame with raw variables and matching flag columns.
-#' @param var  Character, variable name to inspect (e.g., "temp").
+#' @param y_col  Character, variable name to inspect (e.g., "temp").
 #' @param suffix Flag suffix used for QC columns. Default "_qcflag".
 #' @param time_col Time column name. Default "DateTime".
 #' @return A ggplot object with two vertical panels.
@@ -270,21 +270,21 @@ qc_apply_flags <- function(data, suffix = "_qcflag", drop_flags = TRUE) {
 #' @importFrom ggplot2 facet_grid labeller labs theme_bw theme aes
 #' @template see-vignette
 #' @export
-qc_check_plot <- function(data, var, suffix = "_qcflag", time_col = "DateTime") {
-  stopifnot(is.data.frame(data), length(var) == 1, is.character(var))
+qc_check_plot <- function(data, y_col, suffix = "_qcflag", time_col = "DateTime") {
+  stopifnot(is.data.frame(data), length(y_col) == 1, is.character(y_col))
   if (!time_col %in% names(data))
     stop("qc_check_plot(): time column '", time_col, "' not found")
-  if (!var %in% names(data))
-    stop("qc_check_plot(): variable '", var, "' not found")
+  if (!y_col %in% names(data))
+    stop("qc_check_plot(): variable '", y_col, "' not found")
 
-  fcol <- paste0(var, suffix)
+  fcol <- paste0(y_col, suffix)
   if (!fcol %in% names(data))
     stop("qc_check_plot(): flag column '", fcol, "' not found")
 
   # tidy per-panel data
   raw_df <- data.frame(
     time = data[[time_col]],
-    y    = data[[var]],
+    y    = data[[y_col]],
     flag = data[[fcol]],
     panel = "raw")
   clean_df <- raw_df
@@ -306,9 +306,9 @@ qc_check_plot <- function(data, var, suffix = "_qcflag", time_col = "DateTime") 
     scale_colour_manual(values = fl$colors, breaks = fl$levels,
       labels = fl$labels, drop = FALSE, name = NULL) +
     facet_grid(panel ~ ., scales = "free_y",
-      labeller = labeller(panel = c(raw = paste(var, "(raw)"),
-        clean = paste(var, "(clean)")))) +
-    labs(x = NULL, y = NULL, title = paste("QC check for", var)) +
+      labeller = labeller(panel = c(raw = paste(y_col, "(raw)"),
+        clean = paste(y_col, "(clean)")))) +
+    labs(x = NULL, y = NULL, title = paste("QC check for", y_col)) +
     theme_bw(base_size = 10) +
     theme(legend.position = "bottom")
 }

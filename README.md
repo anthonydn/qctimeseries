@@ -5,7 +5,10 @@ Window-by-window QC for large time series. Review flags in a Shiny/plotly app, t
 ## Install
 
 ```r
-# minimal (fastest; user manual vignette still available on web)
+
+# install.packages("remotes")
+
+# minimal (fastest; user manual vignette available on web)
 remotes::install_github("anthonydn/qctimeseries")
 
 # full (allows access to vignette locally)
@@ -18,12 +21,12 @@ remotes::install_github("anthonydn/qctimeseries", build_vignettes = TRUE)
 library(qctimeseries)
 
 # Try the app on the included example data
-src <- system.file("extdata", "sat_site_qc.RData", package = "qctimeseries")
-if (!file.exists("sat_site_qc.RData")) file.copy(src, "sat_site_qc.RData")
-load("sat_site_qc.RData")
-qc_progress(sat_site_qc, hide_complete = TRUE)
-sat_site_qc <- qc_window_app(sat_site_qc, y_col = "away_eos_co2_flux", time_col = "DateTime")
-qc_progress(sat_site_qc, hide_complete = TRUE)
+src <- system.file("extdata", "ibutton_example_qc.RData", package = "qctimeseries")
+if (!file.exists("ibutton_example_qc.RData")) file.copy(src, "ibutton_example_qc.RData")
+load("ibutton_example_qc.RData")
+qc_progress(ibutton_example_qc, hide_complete = TRUE)
+ibutton_example_qc <- qc_window_app(ibutton_example_qc, y_col = "away_eos_co2_flux", time_col = "DateTime")
+qc_progress(ibutton_example_qc, hide_complete = TRUE)
 ```
 
 ### Vignette
