@@ -49,6 +49,12 @@ target="_blank" rel="noopener">anthony.darrouzet-nardi.net/qctimeseries</a>
 * Helpers: `qc_add_flags()`, `qc_progress()`, `qc_apply_flags()`, `qc_check_plot()`, `qc_transfer()`, `qc_remove_flags()`
 * R Markdown template so non-R users can review by clicking Run
 
+## Known limitations
+
+* Time zones have not gotten enough dedicated attention so be careful with them  
+* If you are using it now, you are basically an alpha tester, so let me know what
+ bugs or inconveniences you find!
+
 ## License
 
 GPL-3

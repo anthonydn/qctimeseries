@@ -149,27 +149,28 @@ qc_check_plot(ibutton_example_qc, "temp", time_col = "DateTime")
 When you’re done, mask flagged values (set to `NA`) and, if you like, drop flag columns.
 
 ```{r, eval=FALSE}
-df_clean <- qc_apply_flags(ibutton_example_qc, drop_flags = TRUE)
+ib_clean <- qc_apply_flags(ibutton_example_qc, drop_flags = TRUE)
 ```
 
 **Export**
 
+In addition to exporting the clean data, you can export the qc object to
+preserve the raw data and keep a record of assigned flags.
+
 CSV (always available):
 
 ```{r, eval=FALSE}
-write.csv(df_clean, "cleaned_output.csv", row.names = FALSE)
+write.csv(ibutton_example_qc, "ibutton_qc.csv", row.names = FALSE)
+write.csv(ib_clean, "ibutton_clean.csv", row.names = FALSE)
 ```
 
-Excel (requires a writer; two options):
+Excel
 
 ```{r, eval=FALSE}
-# Option A: writexl (simple)
+# Example with writexl package
 # install.packages("writexl")
-writexl::write_xlsx(df_clean, "cleaned_output.xlsx")
-
-# Option B: openxlsx (more control)
-# install.packages("openxlsx")
-openxlsx::write.xlsx(df_clean, "cleaned_output.xlsx")
+writexl::write_xlsx(ibutton_example_qc, "ibutton_qc.xlsx")
+writexl::write_xlsx(ib_clean, "ibutton_clean.xlsx")
 ```
 
 ---
@@ -308,6 +309,7 @@ qc_progress(data_qc, hide_complete = TRUE)
 
 # 5. Apply and export
 data_clean <- qc_apply_flags(data_qc, drop_flags = TRUE)
+write.csv(data_qcflag, "data_qc.csv", row.names = FALSE)
 write.csv(data_clean, "data_clean.csv", row.names = FALSE)
 ```
 
