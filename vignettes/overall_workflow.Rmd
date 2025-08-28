@@ -23,7 +23,7 @@ This vignette shows the end‑to‑end workflow for window‑by‑window QC of l
 6. **(Optional) Visual check** with `qc_check_plot()`.
 7. **Apply flags** and **export** cleaned data.
 
-**Flag encoding**: `1 = approved`, `0 = unchecked`, `-1 = original NA`, `-2 = manual flag`, `-3 = unsure`.
+**Flag encoding**: `1 = approved`, `0 = unchecked`, `-1 = original NA`, `-2 = manual flag`.
 
 ### Data requirements
 
@@ -331,6 +331,8 @@ save(dat_qc, file = "your_data_qc.RData")
 ```{r, eval=FALSE}
 # Via Rstudio Menu:
 # File -> New File -> R Markdown -> From Template -> "Data checker - qctimeseries"
+# Give it a name you want like your_data_checker and select the folder
+# you want it in
 
 # Or create directly in your working directory:
 rmarkdown::draft("your_data_checker.Rmd",

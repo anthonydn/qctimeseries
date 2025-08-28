@@ -346,13 +346,13 @@ qc_flag_levels <- function() {list(
 #' @param write_csv logical; write CSV outputs (default TRUE).
 #' @param csv_compress logical; if TRUE write .csv.gz else .csv (default TRUE).
 #' @param na_csv CSV missing value marker (default "NA").
-#' @param write_parquet logical; also write Parquet if {arrow} available (default TRUE).
+#' @param write_parquet logical; also write Parquet if \pkg{arrow} available (default TRUE).
 #' @param parquet_compression "zstd","snappy","gzip" (default "zstd").
-#' @param write_xlsx logical; also write Excel .xlsx via {writexl} (default FALSE).
+#' @param write_xlsx logical; also write Excel .xlsx via \pkg{writexl} (default FALSE).
 #' @param write_rds logical; also write RDS (default FALSE).
 #' @return Invisibly, named list of written paths.
+#' @importFrom stats setNames
 #' @export
-#' @importFrom readr write_csv
 qc_write_exports <- function(
     data,
     time_col            = "DateTime",

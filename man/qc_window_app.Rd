@@ -10,7 +10,9 @@ qc_window_app(
   win_hrs = 168,
   qc_suffix = "_qcflag",
   time_col = "DateTime",
-  tz_user = "America/Denver"
+  tz_user = "America/Denver",
+  main_height = 440,
+  sec_height = 200
 )
 }
 \arguments{
@@ -28,6 +30,15 @@ place (\code{1 = approved}, \code{0 = unchecked}, \code{-2 = flagged}, \verb{-1 
 \item{time_col}{Name of the POSIXct column. Defaults to \code{"DateTime"}.}
 
 \item{tz_user}{Time zone used for display (affects x-axis labels only).}
+
+\item{main_height}{Initial height (in pixels) for the main time-series plot.
+Sets the starting size of the top plot; can be adjusted in-app via the
+“Main height (px)” control. Default is \code{440}.}
+
+\item{sec_height}{Initial height (in pixels) for the secondary plot.
+Sets the starting size of the bottom plot; can be adjusted in-app via the
+“Secondary height (px)” control. Default is \code{200}. Reduce down to a
+minimum of 10 to 'hide' the secondary plot.}
 }
 \value{
 A \code{data.frame} identical to \code{dat} but with modified QC flag columns.

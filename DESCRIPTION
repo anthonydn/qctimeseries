@@ -27,7 +27,10 @@ Imports:
 Suggests:
     testthat (>= 3.0.0),
     knitr,
-    rmarkdown
+    rmarkdown,
+    readr,
+    arrow,
+    writexl
 LazyData: false
 URL: https://github.com/anthonydn/qctimeseries
 BugReports: https://github.com/anthonydn/qctimeseries/issues

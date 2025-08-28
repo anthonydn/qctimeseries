@@ -37,7 +37,8 @@ qc_progress(ibutton_example_qc, hide_complete = FALSE)
 Change `y_col` below to the variable you are about to check, then run the chunk. The QC window opens in a browser tab. You can select variable names from the progress table above and paste them here.
 
 ```{r qc_window_app, warning=FALSE}
-ibutton_example_qc <- qc_window_app(ibutton_example_qc, time_col = "datetime",
+ibutton_example_qc <- qc_window_app(ibutton_example_qc, 
+  time_col = "datetime", win_hrs = 10000,
   y_col = "temp") # <-- CHANGE THE VARIABLE NAME IN THE QUOTES
 ```
 

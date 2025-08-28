@@ -40,11 +40,11 @@ with any trailing \verb{_qc} / \verb{_clean} removed.}
 
 \item{na_csv}{CSV missing value marker (default "NA").}
 
-\item{write_parquet}{logical; also write Parquet if {arrow} available (default TRUE).}
+\item{write_parquet}{logical; also write Parquet if \pkg{arrow} available (default TRUE).}
 
 \item{parquet_compression}{"zstd","snappy","gzip" (default "zstd").}
 
-\item{write_xlsx}{logical; also write Excel .xlsx via {writexl} (default FALSE).}
+\item{write_xlsx}{logical; also write Excel .xlsx via \pkg{writexl} (default FALSE).}
 
 \item{write_rds}{logical; also write RDS (default FALSE).}
 }

@@ -14,6 +14,14 @@
 #'   place (`1 = approved`, `0 = unchecked`, `-2 = flagged`, `-1 = original NA`).
 #' @param time_col Name of the POSIXct column. Defaults to `"DateTime"`.
 #' @param tz_user Time zone used for display (affects x-axis labels only).
+#' @param main_height Initial height (in pixels) for the main time-series plot.
+#'   Sets the starting size of the top plot; can be adjusted in-app via the
+#'   “Main height (px)” control. Default is `440`.
+#'
+#' @param sec_height Initial height (in pixels) for the secondary plot.
+#'   Sets the starting size of the bottom plot; can be adjusted in-app via the
+#'   “Secondary height (px)” control. Default is `200`. Reduce down to a
+#'   minimum of 10 to 'hide' the secondary plot.
 #'
 #' @return A `data.frame` identical to `dat` but with modified QC flag columns.
 #' @export
@@ -36,7 +44,9 @@ qc_window_app <- function(dat,
                           win_hrs   = 168,
                           qc_suffix = "_qcflag",
                           time_col  = "DateTime",
-                          tz_user   = "America/Denver") {
+                          tz_user   = "America/Denver",
+                          main_height = 440,
+                          sec_height = 200) {
 
 # --- load ----------------------------------------------------------
 if (!inherits(dat[[time_col]], "POSIXct")) {
@@ -54,7 +64,7 @@ if (!fcol %in% names(dat))
 dt <- as.data.table(dat)
 if (!".rowid" %in% names(dt)) dt[, .rowid := .I]
 
-make_windows <- function(hrs, include = c(-3L, -2L, 0L, 1L)) {
+make_windows <- function(hrs, include = c(-2L, 0L, 1L)) {
   start <- min(dt[[time_col]], na.rm = TRUE)
   dt[, win_id := as.integer(floor(as.numeric(difftime(get(time_col),
     start, "secs")) / (hrs * 3600)))]
@@ -78,7 +88,7 @@ y_range     <- NULL
 ui <- fluidPage(
 
 # html layout and design
-tags$head(tags$style(HTML("html, body { overflow-y: scroll; }
+tags$head(tags$style(HTML("html, body { overflow-y: auto; }
   .btn-row { display:flex; justify-content:center; flex-wrap:wrap; gap:6px; }
   .btn-row .btn, .btn-row .form-control { margin:3px 4px; height:34px; }
   .label-inline { font-weight:600; display:flex; align-items:center;
@@ -138,8 +148,8 @@ tags$script(HTML("(function () {function getGD(id){
     lastMode=null; e.preventDefault();}});})()")),
 
   textOutput("win_label"),
-  plotlyOutput("tsplot", height = 440),
-  plotlyOutput("secplot", height = 200),
+  uiOutput("tsplot_ui"),
+  uiOutput("secplot_ui"),
   tags$hr(style="margin:4px 0;"),
 
   div(class="btn-row",
@@ -155,8 +165,7 @@ tags$script(HTML("(function () {function getGD(id){
   div(class="btn-row",
     actionButton("flag_sel",   "Flag Selected Points", class="btn-danger"),
     actionButton("unflag_sel", "Unflag Selected Points"),
-    actionButton("approve_sel","Approve Selected Points", class="btn-success"),
-    actionButton("btn_unsure", "Mark points Unsure", class = "btn-warning")),
+    actionButton("approve_sel","Approve Selected Points", class="btn-success")),
   div(class="btn-row",
     actionButton("flag_win", "Flag ENTIRE Window", class="btn-danger"),
     actionButton("approve_unflagged", "Approve ALL Unflagged", class="btn-success"),
@@ -165,17 +174,19 @@ tags$script(HTML("(function () {function getGD(id){
   div(class = "filters", tags$label("Show windows containing:",
       class = "control-label"),
     checkboxGroupInput("show_states", label = NULL, inline = TRUE,
-      choices  = c("Unchecked" = "0", "Unsure" = "-3", "Approved"  = "1",
-        "Flagged" = "-2"),
-      selected = c("0","-3","1","-2")),
+      choices  = c("Unchecked" = "0", "Approved"  = "1", "Flagged" = "-2"),
+      selected = c("0","1","-2")),
     span(class = "divider", "|"),
     tags$label("Hide flagged:", class = "control-label"),
     checkboxInput("hide_bad", label = NULL, value = FALSE, width = "auto")),
   div(class="btn-row",
-    span(class="label-inline","Window (hrs):"),
-    numericInput("win_width",NULL,win_hrs,min=1,width="90px"),
+    numericInput("win_width","Window (hrs):" , win_hrs, min = 1, width = "90px"),
     actionButton("reset_all","Reset ALL -> Unchecked"),
-    actionButton("done", "Done / Return", class="btn-primary")))
+    actionButton("done", "Done / Return", class="btn-primary"),
+    numericInput("h_main", "Main height (px):", value = 440,
+                 min = 100, max = 1600, step = 10, width = "100px"),
+    numericInput("h_sec",  "Secondary height (px):", value = 200,
+                 min = 10,  max = 800,  step = 10, width = "100px")))
 
 # --- server -----------------------------------------------------------------
 server <- function(input, output, session) {
@@ -210,6 +221,29 @@ server <- function(input, output, session) {
     span <- as.numeric(difftime(t1, t0, units = "secs"))
     pad  <- span * 0.02
     c(t0 - pad, t1 + pad)}
+
+  #plot height management
+  output$tsplot_ui <- renderUI({
+    h <- if (is.null(input$h_main) || !is.finite(input$h_main))
+      main_height else as.integer(input$h_main)
+      plotlyOutput("tsplot", height = paste0(h, "px"))})
+  output$secplot_ui <- renderUI({
+    h <- if (is.null(input$h_sec) || !is.finite(input$h_sec))
+      sec_height else as.integer(input$h_sec)
+      plotlyOutput("secplot", height = paste0(h, "px"))})
+  observeEvent(input$h_main, ignoreInit = TRUE, {redraw(TRUE, TRUE)})
+  observeEvent(input$h_sec, ignoreInit = TRUE, {redraw(TRUE, TRUE)})
+  clamp <- function(x, lo, hi, default) {
+    x <- suppressWarnings(as.numeric(x))
+    if (!is.finite(x)) default else max(lo, min(hi, x))}
+  ts_h  <- reactive({ clamp(input$h_main, 100, 1600, 440) })
+  sec_h <- reactive({ clamp(input$h_sec,   10,  800,  200) })
+  observeEvent(ts_h(),  ignoreInit = TRUE, {
+    if (!identical(ts_h(), input$h_main))
+      updateNumericInput(session, "h_main", value = ts_h())})
+  observeEvent(sec_h(), ignoreInit = TRUE, {
+    if (!identical(sec_h(), input$h_sec))
+      updateNumericInput(session, "h_sec", value = sec_h())})
 
   build_plot <- function() {
     rows <- rows_now()
@@ -255,8 +289,7 @@ server <- function(input, output, session) {
 
     p <- add_pts(rows[dt[rows][[fcol]] == 1L], "green")
     if (!isTRUE(input$hide_bad)) {
-      p <- add_pts(rows[dt[rows][[fcol]] == -2L], "red")
-      p <- add_pts(rows[dt[rows][[fcol]] == -3L], "goldenrod")}
+      p <- add_pts(rows[dt[rows][[fcol]] < -1L], "red")}
     p
   }
 
@@ -336,7 +369,6 @@ server <- function(input, output, session) {
   observeEvent(input$flag_sel,    set_flag(brushed_ids(), -2L))
   observeEvent(input$approve_sel, set_flag(brushed_ids(),  1L))
   observeEvent(input$unflag_sel,  set_flag(brushed_ids(),  0L))
-  observeEvent(input$btn_unsure,  set_flag(brushed_ids(), -3L))
 
   # -- window buttons --------------------------------------------------------
   observeEvent(input$flag_win, {
@@ -369,7 +401,7 @@ server <- function(input, output, session) {
 
   # window inclusion determination checkboxes
   include_codes <- reactive({sel <- input$show_states
-    if (is.null(sel) || !length(sel)) c(-3L, -2L, 0L, 1L) else as.integer(sel)})
+    if (is.null(sel) || !length(sel)) c(-2L, 0L, 1L) else as.integer(sel)})
 
   # when window width changes, recompute using current filters
   observeEvent(input$win_width, ignoreInit = TRUE, {
