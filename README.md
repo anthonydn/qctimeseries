@@ -51,10 +51,14 @@ target="_blank" rel="noopener">anthony.darrouzet-nardi.net/qctimeseries</a>
 
 ## Known limitations
 
-* Time zones have not gotten enough dedicated attention so be careful with them  
-* If you are using it now, you are basically an alpha tester, so let me know what
+* Time zones have not gotten enough dedicated attention so be careful with them.  
+* If you are using it now, you are an alpha tester, so let me know what
  bugs or inconveniences you find!
 
 ## License
 
 GPL-3
+
+## Acknowledgements
+
+* Thanks to Kai Schmitt for early testing.
