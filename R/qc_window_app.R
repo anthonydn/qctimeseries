@@ -201,6 +201,7 @@ server <- function(input, output, session) {
   sec_choices <- names(dt)
   sec_choices <- sec_choices[!grepl(paste0(qc_suffix, "$"), sec_choices)]
   sec_choices <- setdiff(sec_choices, c(time_col, y_col, fcol))
+  sec_choices <- setdiff(sec_choices, c(".rowid", "win_id"))
   updateSelectInput(session, "sec_var", choices = c("", sec_choices), selected = "")
 
   rows_now <- function() win_rows[[as.character(current_win)]]
