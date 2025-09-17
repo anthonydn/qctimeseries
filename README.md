@@ -13,6 +13,8 @@ remotes::install_github("anthonydn/qctimeseries")
 
 # full (allows access to vignette locally)
 remotes::install_github("anthonydn/qctimeseries", build_vignettes = TRUE)
+
+Note: You may see a warning about Rtools on Windows. This package is pure R and does not require compilation, so you can ignore that message.
 ```
 
 ## Quick start
