@@ -11,21 +11,26 @@ vignette: |
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(comment = "#>", collapse = TRUE, message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(
+  eval     = interactive(),
+  comment  = "#>",
+  collapse = TRUE, message = FALSE, warning = FALSE
+)
 ```
 
 ## Quick demo
 
-```r
-# Load the example QC object shipped with qctimeseries
+```{r eval=FALSE}
+library(qctimeseries)
+
+# Try the app on the included example data
 load(system.file("extdata", "ibutton_example_qc.RData", package = "qctimeseries"))
 
-# Quick look at progress, then open the windowed app
 qc_progress(ibutton_example_qc, hide_complete = FALSE)
 
-# Set y_col to a variable present in the object; adjust time_col if needed
-ibutton_example_qc <- qc_window_app(ibutton_example_qc,
-  y_col = "temp", time_col = "DateTime")
+ibutton_example_qc <- qc_window_app(ibutton_example_qc, 
+  y_col = "temp", time_col = "datetime", win_hrs = 10000)
+# nuke those high temps when the ibutton was taken back to the lab!
 ```
 
 ## Overview
@@ -55,7 +60,7 @@ ensure the time column is in proper format and it should not have NA values for 
 
 ## 0) Install the package (first time only)
 
-```r
+```{r eval=FALSE}
 # install.packages("remotes")
 
 # minimal (fastest; user manual vignette available online; link below)
@@ -320,7 +325,7 @@ Selections you make (box/lasso) drive the **Flag/Approve Selected** buttons.
 
 ## Summary of Workflow
 
-```r
+```{r summary}
 # 1. Import
 data <- read.csv("path/to/input.csv", stringsAsFactors = FALSE)
 data$DateTime <- as.POSIXct(data$DateTime, tz = "UTC")
