@@ -128,6 +128,8 @@ tags$script(HTML("(function () {function getGD(id){
       e.preventDefault(); return; }
     if (e.key==='q'||e.key==='Q'){ lastMode=null; setMode('lasso');
       e.preventDefault(); return; }
+    if (e.key==='l'||e.key==='L'){ lastMode=null; setMode('lasso');
+      e.preventDefault(); return; }
     if (e.key==='z'||e.key==='Z'){ lastMode=null; setMode('zoom');
       e.preventDefault(); return; }
     if (e.key==='p'||e.key==='P'){ lastMode=null; setMode('pan');

@@ -34,7 +34,7 @@ ibutton_example_qc <- qc_window_app(ibutton_example_qc,
 # see vignette below for how to use it 
 ```
 
-### Vignette (user manual)
+### Vignette (Full user manual)
 
 ```r
 vignette("overall_workflow", package = "qctimeseries")

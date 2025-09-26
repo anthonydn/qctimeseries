@@ -1,14 +1,31 @@
 ---
-title: "Overall workflow for qctimeseries"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Overall workflow for qctimeseries}
+title: "Workflow for qctimeseries"
+output:
+  rmarkdown::html_vignette:
+    df_print: paged
+vignette: |
+  %\VignetteIndexEntry{Workflow for qctimeseries}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(comment = "#>", collapse = TRUE, message = FALSE, warning = FALSE)
+```
+
+## Quick demo
+
+```r
+# Load the example QC object shipped with qctimeseries
+load(system.file("extdata", "ibutton_example_qc.RData", package = "qctimeseries"))
+
+# Quick look at progress, then open the windowed app
+qc_progress(ibutton_example_qc, hide_complete = FALSE)
+
+# Set y_col to a variable present in the object; adjust time_col if needed
+ibutton_example_qc <- qc_window_app(ibutton_example_qc,
+  y_col = "temp", time_col = "DateTime")
 ```
 
 ## Overview
@@ -39,9 +56,16 @@ ensure the time column is in proper format and it should not have NA values for 
 ## 0) Install the package (first time only)
 
 ```r
-# Not run in vignette:
 # install.packages("remotes")
-# remotes::install_github("anthonydn/qctimeseries", build_vignettes = TRUE)
+
+# minimal (fastest; user manual vignette available online; link below)
+remotes::install_github("anthonydn/qctimeseries")
+
+# full (allows access to vignette locally)
+remotes::install_github("anthonydn/qctimeseries", build_vignettes = TRUE)
+
+# Note: You may see a warning about Rtools on Windows. This package is pure R and does
+# not require compilation, so you can ignore that message.
 ```
 
 ---
@@ -288,6 +312,12 @@ Selections you make (box/lasso) drive the **Flag/Approve Selected** buttons.
 
 ---
 
+## Hotkeys
+
+<style> .qc-hotkeys table { table-layout: fixed; width: 100%; } .qc-hotkeys th:first-child { width: 28%; } .qc-hotkeys td, .qc-hotkeys th { white-space: normal; word-break: break-word; } </style> <table class="qc-hotkeys"> <thead> <tr><th>Hotkey</th><th>What it does</th><th>Notes</th></tr> </thead> <tbody> <tr> <td><strong>Space</strong> (hold)</td> <td>Temporarily switch to <strong>Pan</strong></td> <td>Convenient for quick drags; keys aren’t captured while typing in inputs</td> </tr> <tr> <td><strong>B</strong></td> <td>Set drag mode to <strong>Box Select</strong></td> <td>Use to select points in a rectangle</td> </tr> <tr> <td><strong>Q</strong> or <strong>L</strong></td> <td>Set drag mode to <strong>Lasso Select</strong></td> <td>Freeform selection</td> </tr> <tr> <td><strong>Z</strong></td> <td>Set drag mode to <strong>Zoom</strong></td> <td>Drag to zoom, double-click to autoscale y</td> </tr> <tr> <td><strong>P</strong></td> <td>Set drag mode to <strong>Pan</strong></td> <td>Click-drag to move along the time axis</td> </tr> <tr> <td><strong>H</strong></td> <td><strong>Home zoom</strong></td> <td>Restore default x-range for current window and autoscale y</td> </tr> <tr> <td><strong>←</strong> Left Arrow</td> <td><strong>Prev</strong> window</td> <td>Same as clicking <em>Prev</em></td> </tr> <tr> <td><strong>→</strong> Right Arrow</td> <td><strong>Next</strong> window</td> <td>Same as clicking <em>Next</em></td> </tr> <tr> <td><strong>Enter</strong></td> <td><strong>Flag Selected &amp; Approve Unflagged &amp; Next</strong></td> <td>Workhorse action; advances to next window</td> </tr> </tbody> </table>
+
+---
+
 ## Summary of Workflow
 
 ```r
@@ -309,11 +339,11 @@ qc_progress(data_qc, hide_complete = TRUE)
 
 # 5. Apply and export
 data_clean <- qc_apply_flags(data_qc, drop_flags = TRUE)
-write.csv(data_qcflag, "data_qc.csv", row.names = FALSE)
+write.csv(data_qc, "data_qc.csv", row.names = FALSE)
 write.csv(data_clean, "data_clean.csv", row.names = FALSE)
 ```
 
-## Click-to-run QC (R Markdown template)
+## Helper mode for non-R users (R Markdown template)
 
 You can set up a simple QC environment so helpers with little to no R experience can review data by opening an editable R Markdown file and pressing "Run" on each chunk. The only thing they change is the variable name as they move through each variable that needs QC checking.
 
