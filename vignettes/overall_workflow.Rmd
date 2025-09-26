@@ -28,7 +28,7 @@ This vignette shows the end‑to‑end workflow for window‑by‑window QC of l
 ### Data requirements
 
 * A data frame or data.table.
-* One **time column** (default name: `"DateTime"`), of class **POSIXct**.
+* One time column (default name: `"DateTime"`), of class **POSIXct**.
 * One or more **numeric** variables to QC (each will get a `*_qcflag` column).
 
 If your time column isn’t POSIXct, the app will show an error. The user should
@@ -48,19 +48,19 @@ ensure the time column is in proper format and it should not have NA values for 
 
 ## 1) Start or resume a session
 
-You can **resume** from prior work, or **start fresh** with your own source file.
+You can **resume** from prior work, or **import new data** with your own source file.
 
 ### A. Resume work
 
 ```{r}
 # Loads an R object you saved earlier (see Section 5)
-# This should define an object like `ibutton_example_qc` in your workspace
+# This should create an object like `ibutton_example_qc` in your workspace
 # load("ibutton_example_qc.RData")
 ```
 
 ### B. Import new data
 
-A .csv example with online data is shown, but any import function (e.g., write_excel) can be used as you set up.
+A .csv example with online data is shown, but any import function (e.g., read_excel) can be used as you set up.
 
 **CSV example**
 
