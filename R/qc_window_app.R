@@ -301,21 +301,32 @@ server <- function(input, output, session) {
     if (is.null(var) || var == "" || !(var %in% names(dt)))
       return(plotly_empty(type = "scattergl", mode = "lines"))
 
-    rows <- rows_now()
-    good <- rows[ dt[rows][[fcol]] >= 0L & !is.na(dt[[var]][rows]) ]
+    rows  <- rows_now()
+    fcol2 <- paste0(var, qc_suffix)
+
+    # Always hide secondary points flagged as bad (negative flags), regardless of hide_bad
+    if (fcol2 %in% names(dt)) {
+      good <- rows[ dt[rows, !is.na(get(var)) & (get(fcol2) >= 0L)] ]
+    } else {
+      good <- rows[ !is.na(dt[[var]][rows]) ]
+    }
     if (!length(good)) return(plotly_empty(type = "scattergl", mode = "lines"))
+
     xr <- if (is.null(x_range)) window_xr0() else x_range
 
     plot_ly(dt[good],
-      x = as.formula(paste0("~", time_col)),
-      y = ~get(var),
-      type="scattergl", mode="lines",
-      line=list(width=1,color="orange")) %>%
-    layout(dragmode="zoom",
-      xaxis=list(range=xr),
-      yaxis=list(title=var)) %>%
-    config(modeBarButtonsToRemove = c("autoScale2d", "resetScale2d"))
-    }
+            x = as.formula(paste0("~", time_col)),
+            y = ~get(var),
+            type = "scattergl", mode = "lines",
+            line = list(width = 1, color = "orange")) %>%
+      layout(dragmode = "zoom",
+             xaxis = list(range = xr),
+             yaxis = list(title = var)) %>%
+      config(modeBarButtonsToRemove = c("autoScale2d", "resetScale2d"))
+  }
+
+
+
 
   redraw <- function(keep_x = TRUE, keep_y = TRUE) {
     if (!keep_x) x_range <<- NULL
@@ -347,7 +358,8 @@ server <- function(input, output, session) {
   # -- helper to change flags -------------------------------------------------
   set_flag <- function(ids, value) {
     if (length(ids)) {
-      dt[ids, (fcol) := value]
+      keep <- ids[ dt[ids, get(fcol) != -1L] ]  # do not touch original NAs
+      if (length(keep)) dt[keep, (fcol) := value]
       redraw(TRUE)}}
 
   # -- navigation ------------------------------------------------------------
@@ -375,7 +387,9 @@ server <- function(input, output, session) {
 
   # -- window buttons --------------------------------------------------------
   observeEvent(input$flag_win, {
-    dt[rows_now(), (fcol) := -2L]
+    r <- rows_now()
+    keep <- r[ dt[r, get(fcol) != -1L] ]  # do not touch original NAs
+    if (length(keep)) dt[keep, (fcol) := -2L]
     redraw(TRUE)})
   observeEvent(input$approve_unflagged, {
     r <- rows_now()
@@ -383,7 +397,9 @@ server <- function(input, output, session) {
     if (length(good)) dt[good, (fcol) := 1L]
     redraw(TRUE)})
   observeEvent(input$reset_win, {
-    dt[rows_now(), (fcol) := 0L]
+    r <- rows_now()
+    keep <- r[ dt[r, get(fcol) != -1L] ]  # do not touch original NAs
+    if (length(keep)) dt[keep, (fcol) := 0L]
     redraw(TRUE)})
 
   # flag selected & next
