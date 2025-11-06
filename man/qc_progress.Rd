@@ -7,20 +7,40 @@
 qc_progress(data, quiet = FALSE, hide_complete = FALSE)
 }
 \arguments{
-\item{data}{A data.frame returned by \code{\link[=qc_add_flags]{qc_add_flags()}}.}
+\item{data}{A \code{data.frame} returned by \code{\link[=qc_add_flags]{qc_add_flags()}} (must carry
+attributes \code{qc_vars} and \code{qc_suffix}).}
 
 \item{quiet}{If \code{TRUE}, return invisibly without printing.}
 
-\item{hide_complete}{If \code{TRUE}, only return rows with \code{pct_checked < 100}.}
+\item{hide_complete}{If \code{TRUE}, only return rows with \verb{\%checked < 100}.}
 }
 \value{
-A tibble/data.frame with per-variable totals and percentages.
+A tibble with per-variable totals and percentages:
+\itemize{
+\item \code{variable}: base variable name
+\item \code{total}: count of nonmissing data points
+\item \code{\%checked}: percent of nonmissing points whose flag is not
+\code{0} (unchecked) and not \code{-1} (original NA marker)
+\item \code{\%approved(1)}: percent of all rows with flag \code{1}
+\item \code{\%unchecked(0)}: percent of all rows with flag \code{0}
+\item \code{\%missing(-1)}: percent of all rows with flag \code{-1}
+\item \code{\%flagged(-2)}: percent of all rows with flag \code{-2}
+}
 }
 \description{
-QC progress summary
+Summarize QC progress for each variable that has a corresponding flag column.
+Assumes flags use: 1 = approved, 0 = unchecked, -2 = flagged, -1 = original NA.
 }
 \details{
-Percentages are computed over \strong{all rows} (including missing) by default.
+Columns whose names include a flag value (e.g., \code{\%flagged(-2)}) are
+computed over \emph{all rows} (including missing). The denominator for
+\code{\%checked} is the number of nonmissing values.
+
+This function warns when:
+\enumerate{
+\item \code{sum(is.na(value))} does not match \code{sum(flag == -1)}.
+\item Any flag outside \code{c(-2, -1, 0, 1)} is detected.
+}
 }
 \seealso{
 For a step-by-step guide, see the package vignette:
