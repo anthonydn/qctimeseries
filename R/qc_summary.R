@@ -1,7 +1,8 @@
 #' QC progress summary
 #'
 #' Summarize QC progress for each variable that has a corresponding flag column.
-#' Assumes flags use: 1 = approved, 0 = unchecked, -2 = flagged, -1 = original NA.
+#' Assumes flags use: 1 = approved, 0 = unchecked, -2 = flagged,
+#' -1 = original NA.
 #'
 #' @param data A `data.frame` returned by [qc_add_flags()] (must carry
 #'   attributes `qc_vars` and `qc_suffix`).
@@ -32,6 +33,7 @@
 #' }
 #'
 #' @template see-vignette
+#' @importFrom rlang .data
 #' @export
 qc_progress <- function(data, quiet = FALSE, hide_complete = FALSE) {
     vars <- attr(data, "qc_vars")

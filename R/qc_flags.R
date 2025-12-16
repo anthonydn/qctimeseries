@@ -7,8 +7,10 @@
 #' @param data A data.frame or data.table of raw values.
 #' @param vars Character vector of columns to flag. If NULL, all numeric columns.
 #' @param suffix Suffix to use for flag columns. Default "_qcflag".
-#' @param overwrite Logical; overwrite existing flag columns if present. Default FALSE.
-#' @param require_numeric Logical; if TRUE and `vars` contains non-numeric columns, error. Default TRUE.
+#' @param overwrite Logical; overwrite existing flag columns if present.
+#'   Default FALSE.
+#' @param require_numeric Logical; if TRUE and `vars` contains non-numeric
+#'   columns, error. Default TRUE.
 #' @return Same class as `data` with new integer flag columns appended.
 #' @examples
 #' df <- data.frame(x = c(1, NA, 3), y = 4:6)
@@ -21,16 +23,23 @@ qc_add_flags <- function(data,
                          overwrite = FALSE,
                          require_numeric = TRUE) {
     stopifnot(is.data.frame(data))
-    if (!nzchar(suffix)) stop("qc_add_flags(): `suffix` must be a non-empty string")
+    if (!nzchar(suffix)) {
+        stop("qc_add_flags(): `suffix` must be a non-empty string")
+    }
 
     # pick vars
     if (is.null(vars)) {
         vars <- names(data)[vapply(data, is.numeric, logical(1))]
-        if (!length(vars)) stop("qc_add_flags(): no numeric columns found; supply `vars`")
+        if (!length(vars)) {
+            stop("qc_add_flags(): no numeric columns found; supply `vars`")
+        }
     } else {
         unknown <- setdiff(vars, names(data))
         if (length(unknown)) {
-            stop("qc_add_flags(): columns not found: ", paste(unknown, collapse = ", "))
+            stop(
+                "qc_add_flags(): columns not found: ",
+                paste(unknown, collapse = ", ")
+            )
         }
     }
 
@@ -39,7 +48,8 @@ qc_add_flags <- function(data,
         non_num <- vars[!vapply(data[vars], is.numeric, logical(1))]
         if (length(non_num)) {
             stop(
-                "qc_add_flags(): non-numeric vars not allowed when `require_numeric=TRUE`: ",
+                "qc_add_flags(): non-numeric vars not allowed when ",
+                "`require_numeric=TRUE`: ",
                 paste(non_num, collapse = ", ")
             )
         }
@@ -88,7 +98,8 @@ qc_add_flags <- function(data,
 #'
 #' @param data   data.frame/data.table from [qc_add_flags()].
 #' @param vars   character; base variable names to drop flags for. `NULL` = all.
-#' @param suffix flag suffix; defaults to `attr(data,"qc_suffix")` or `"_qcflag"`.
+#' @param suffix flag suffix; defaults to `attr(data,"qc_suffix")` or
+#'   `"_qcflag"`.
 #' @param strict error if a requested flag column is missing (default FALSE).
 #' @return Same class as `data`, with attributes updated.
 #' @template see-vignette
@@ -174,7 +185,8 @@ qc_transfer <- function(df, from, to, suffix = "_qcflag") {
 #'
 #' @param data Data frame produced by [qc_add_flags()] or [qc_window_app()].
 #' @param suffix Flag suffix.
-#' @param drop_flags Logical; drop `*_qcflag` columns after masking (default TRUE).
+#' @param drop_flags Logical; drop `*_qcflag` columns after masking
+#'   (default TRUE).
 #' @return Cleaned data with `flag < 0` values set to NA.
 #' @template see-vignette
 #' @export

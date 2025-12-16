@@ -24,7 +24,10 @@
 #' @importFrom ggplot2 facet_grid labeller labs theme_bw theme aes
 #' @template see-vignette
 #' @export
-qc_check_plot <- function(data, y_col, suffix = "_qcflag", time_col = "DateTime") {
+qc_check_plot <- function(data,
+                          y_col,
+                          suffix = "_qcflag",
+                          time_col = "DateTime") {
     stopifnot(is.data.frame(data), length(y_col) == 1, is.character(y_col))
     if (!time_col %in% names(data)) {
         stop("qc_check_plot(): time column '", time_col, "' not found")
@@ -90,10 +93,13 @@ qc_check_plot <- function(data, y_col, suffix = "_qcflag", time_col = "DateTime"
 #' they are inferred by stripping `attr(data, "qc_suffix")` (default `"_qcflag"`)
 #' from column names that end with that suffix.
 #'
-#' @param data A `data.frame`/`data.table` containing time series and `*_qcflag` columns.
-#' @param outfile Path to the PNG file to write (directories are created if needed).
+#' @param data A `data.frame`/`data.table` containing time series and
+#'   `*_qcflag` columns.
+#' @param outfile Path to the PNG file to write (directories are created
+#'   if needed).
 #' @param width_in Image width in inches (default `25`).
-#' @param per_var_in Image height per variable (in inches), stacked vertically (default `2.5`).
+#' @param per_var_in Image height per variable (in inches), stacked vertically
+#'   (default `2.5`).
 #' @param dpi Raster resolution in dots-per-inch (default `200`).
 #'
 #' @details Very tall images can exceed some viewers’ limits. If the computed
@@ -134,7 +140,8 @@ qc_save_all_plots_png <- function(data,
     if (is.null(suffix)) suffix <- "_qcflag"
     vars <- attr(data, "qc_vars")
     if (is.null(vars) || !length(vars)) {
-        vars <- sub(paste0(suffix, "$"), "", grep(paste0(suffix, "$"), names(data), value = TRUE))
+        suffix_pat <- paste0(suffix, "$")
+        vars <- sub(suffix_pat, "", grep(suffix_pat, names(data), value = TRUE))
     }
     if (!length(vars)) stop("No QC variables found (looked for '*", suffix, "').")
 
@@ -157,9 +164,14 @@ qc_save_all_plots_png <- function(data,
     on.exit(grDevices::dev.off(), add = TRUE)
 
     grid::grid.newpage()
-    grid::pushViewport(grid::viewport(layout = grid::grid.layout(nrow = length(plots), ncol = 1)))
+    # Layout: one column, N rows
+    grid::pushViewport(grid::viewport(
+        layout = grid::grid.layout(nrow = length(plots), ncol = 1)
+    ))
     for (i in seq_along(plots)) {
-        print(plots[[i]], vp = grid::viewport(layout.pos.row = i, layout.pos.col = 1))
+        print(plots[[i]],
+            vp = grid::viewport(layout.pos.row = i, layout.pos.col = 1)
+        )
     }
     invisible(outfile)
 }
@@ -170,6 +182,11 @@ qc_flag_levels <- function() {
     list(
         levels = c("1", "0", "-1", "-2"),
         labels = c("approved", "unchecked", "auto flag", "manual flag"),
-        colors = c(`1` = "forestgreen", `0` = "steelblue", `-1` = "orange", `-2` = "red")
+        colors = c(
+            `1` = "forestgreen",
+            `0` = "steelblue",
+            `-1` = "orange",
+            `-2` = "red"
+        )
     )
 }

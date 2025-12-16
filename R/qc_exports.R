@@ -13,38 +13,40 @@
 #' @param write_csv logical; write CSV outputs (default TRUE).
 #' @param csv_compress logical; if TRUE write .csv.gz else .csv (default TRUE).
 #' @param na_csv CSV missing value marker (default "NA").
-#' @param write_parquet logical; also write Parquet if \pkg{arrow} available (default TRUE).
+#' @param write_parquet logical; also write Parquet if \pkg{arrow} available
+#'   (default TRUE).
 #' @param parquet_compression "zstd","snappy","gzip" (default "zstd").
-#' @param write_xlsx logical; also write Excel .xlsx via \pkg{writexl} (default FALSE).
+#' @param write_xlsx logical; also write Excel .xlsx via \pkg{writexl}
+#'   (default FALSE).
 #' @param write_rds logical; also write RDS (default FALSE).
 #' @return Invisibly, named list of written paths.
 #' @importFrom stats setNames
 #' @export
-qc_write_exports <- function(
-  data,
-  time_col = "DateTime",
-  out_dir = "exports",
-  base_name = NULL,
-  qc_suffix = "_qc",
-  clean_suffix = "_clean",
-  write_csv = TRUE,
-  csv_compress = TRUE,
-  na_csv = "NA",
-  write_parquet = TRUE,
-  parquet_compression = c("zstd", "snappy", "gzip"),
-  write_xlsx = FALSE,
-  write_rds = FALSE
-) {
+qc_write_exports <- function(data,
+                             time_col = "DateTime",
+                             out_dir = "exports",
+                             base_name = NULL,
+                             qc_suffix = "_qc",
+                             clean_suffix = "_clean",
+                             write_csv = TRUE,
+                             csv_compress = TRUE,
+                             na_csv = "NA",
+                             write_parquet = TRUE,
+                             parquet_compression = c("zstd", "snappy", "gzip"),
+                             write_xlsx = FALSE,
+                             write_rds = FALSE) {
     stopifnot(is.data.frame(data))
     parquet_compression <- match.arg(parquet_compression)
-    if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+    if (!dir.exists(out_dir)) {
+        dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+    }
 
     # Derive stem from object name if base_name not provided
     obj_name <- deparse(substitute(data))
     if (is.null(base_name) || !nzchar(base_name)) {
         # strip a trailing _qc or _clean if present (uses your current suffix args)
         esc <- function(x) gsub("([.^$|()*+?{}\\[\\]\\\\])", "\\\\\\1", x)
-        strip_pat <- paste0("(", esc(qc_suffix), "|", esc(clean_suffix), ")$") # e.g., (_qc|_clean)$
+        strip_pat <- paste0("(", esc(qc_suffix), "|", esc(clean_suffix), ")$")
         base_name <- sub(strip_pat, "", obj_name, perl = TRUE)
         if (!nzchar(base_name)) base_name <- obj_name
     }
@@ -89,7 +91,7 @@ qc_write_exports <- function(
     # XLSX (optional; chunk if >1,048,576 rows)
     if (isTRUE(write_xlsx)) {
         if (!requireNamespace("writexl", quietly = TRUE)) {
-            warning("write_xlsx=TRUE but package 'writexl' is not installed; skipping XLSX.")
+            warning("write_xlsx=TRUE but 'writexl' not installed; skipping XLSX.")
         } else {
             write_xlsx_file <- function(df, path, base_sheet) {
                 df2 <- to_text_time(df)
@@ -100,8 +102,14 @@ qc_write_exports <- function(
                 }
                 parts <- (seq_len(n) - 1L) %/% max_rows + 1L
                 idxs <- split(seq_len(n), parts)
-                names <- if (length(idxs) == 1L) base_sheet else paste0(base_sheet, "_", seq_along(idxs))
-                sheets <- setNames(lapply(seq_along(idxs), function(i) df2[idxs[[i]], , drop = FALSE]), names)
+                names <- if (length(idxs) == 1L) {
+                    base_sheet
+                } else {
+                    paste0(base_sheet, "_", seq_along(idxs))
+                }
+                sheets <- setNames(lapply(seq_along(idxs), function(i) {
+                    df2[idxs[[i]], , drop = FALSE]
+                }), names)
                 writexl::write_xlsx(sheets, path)
             }
             x_qc <- file.path(out_dir, paste0(name_qc, ".xlsx"))
@@ -130,7 +138,9 @@ qc_write_exports <- function(
         chk <- file.path(out_dir, paste0(base_name, "_checksums.md5"))
         con <- file(chk, open = "wt", encoding = "UTF-8")
         on.exit(close(con), add = TRUE)
-        for (i in seq_along(md5)) cat(md5[[i]], "  ", names(md5)[i], "\n", sep = "", file = con)
+        for (i in seq_along(md5)) {
+            cat(md5[[i]], "  ", names(md5)[i], "\n", sep = "", file = con)
+        }
         written$checksums <- chk
     }
 
