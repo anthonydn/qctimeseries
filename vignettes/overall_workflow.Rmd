@@ -24,6 +24,7 @@ knitr::opts_chunk$set(
 library(qctimeseries)
 
 # Try the app on the included example data
+getwd()
 load(system.file("extdata", "ibutton_example_qc.RData", package = "qctimeseries"))
 
 qc_progress(ibutton_example_qc, hide_complete = FALSE)

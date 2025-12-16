@@ -16,10 +16,10 @@
 #' @template see-vignette
 #' @export
 qc_add_flags <- function(data,
-                     vars = NULL,
-                     suffix = "_qcflag",
-                     overwrite = FALSE,
-                     require_numeric = TRUE) {
+                         vars = NULL,
+                         suffix = "_qcflag",
+                         overwrite = FALSE,
+                         require_numeric = TRUE) {
   stopifnot(is.data.frame(data))
   if (!nzchar(suffix)) stop("qc_add_flags(): `suffix` must be a non-empty string")
 
@@ -29,30 +29,36 @@ qc_add_flags <- function(data,
     if (!length(vars)) stop("qc_add_flags(): no numeric columns found; supply `vars`")
   } else {
     unknown <- setdiff(vars, names(data))
-    if (length(unknown))
+    if (length(unknown)) {
       stop("qc_add_flags(): columns not found: ", paste(unknown, collapse = ", "))
+    }
   }
 
   # optional type check
   if (require_numeric) {
     non_num <- vars[!vapply(data[vars], is.numeric, logical(1))]
-    if (length(non_num))
-      stop("qc_add_flags(): non-numeric vars not allowed when `require_numeric=TRUE`: ",
-           paste(non_num, collapse = ", "))
+    if (length(non_num)) {
+      stop(
+        "qc_add_flags(): non-numeric vars not allowed when `require_numeric=TRUE`: ",
+        paste(non_num, collapse = ", ")
+      )
+    }
   }
 
   flag_names <- paste0(vars, suffix)
   existing <- intersect(flag_names, names(data))
   if (length(existing) && !isTRUE(overwrite)) {
-    stop("qc_add_flags(): flag columns already exist: ",
-         paste(existing, collapse = ", "),
-         "\nSet `overwrite=TRUE` to replace them.")
+    stop(
+      "qc_add_flags(): flag columns already exist: ",
+      paste(existing, collapse = ", "),
+      "\nSet `overwrite=TRUE` to replace them."
+    )
   }
 
   # build flags
   flags <- lapply(vars, function(v) {
-    f <- integer(nrow(data))     # zeros
-    f[is.na(data[[v]])] <- -1L   # auto-flag original NAs
+    f <- integer(nrow(data)) # zeros
+    f[is.na(data[[v]])] <- -1L # auto-flag original NAs
     f
   })
   names(flags) <- flag_names
@@ -68,9 +74,9 @@ qc_add_flags <- function(data,
   }
 
   # merge attrs (extend if already present)
-  old_vars   <- attr(data, "qc_vars")
-  out_vars   <- sort(unique(c(old_vars, vars)))
-  attr(out, "qc_vars")   <- out_vars
+  old_vars <- attr(data, "qc_vars")
+  out_vars <- sort(unique(c(old_vars, vars)))
+  attr(out, "qc_vars") <- out_vars
   attr(out, "qc_suffix") <- suffix
 
   out
@@ -93,15 +99,20 @@ qc_remove_flags <- function(data, vars = NULL, suffix = NULL, strict = FALSE) {
   if (is.null(suffix)) suffix <- "_qcflag"
 
   flag_cols <- names(data)[endsWith(names(data), suffix)]
-  if (!length(flag_cols)) return(data)
+  if (!length(flag_cols)) {
+    return(data)
+  }
 
   target <- if (is.null(vars)) flag_cols else paste0(vars, suffix)
   missing <- setdiff(target, names(data))
-  if (length(missing) && strict)
+  if (length(missing) && strict) {
     stop("qc_remove_flags(): not found: ", paste(missing, collapse = ", "))
+  }
 
   rm_cols <- intersect(target, names(data))
-  if (!length(rm_cols)) return(data)
+  if (!length(rm_cols)) {
+    return(data)
+  }
 
   # remove columns, preserve class & order
   if (inherits(data, "data.table")) {
@@ -114,14 +125,13 @@ qc_remove_flags <- function(data, vars = NULL, suffix = NULL, strict = FALSE) {
   # refresh attrs from what's left
   left_flags <- names(out)[endsWith(names(out), suffix)]
   if (length(left_flags)) {
-    attr(out, "qc_vars")   <- sub(paste0(suffix, "$"), "", left_flags)
+    attr(out, "qc_vars") <- sub(paste0(suffix, "$"), "", left_flags)
     attr(out, "qc_suffix") <- suffix
   } else {
     attr(out, "qc_vars") <- attr(out, "qc_suffix") <- NULL
   }
   out
 }
-
 
 
 #' QC progress summary
@@ -161,7 +171,7 @@ qc_remove_flags <- function(data, vars = NULL, suffix = NULL, strict = FALSE) {
 #' @export
 
 qc_progress <- function(data, quiet = FALSE, hide_complete = FALSE) {
-  vars   <- attr(data, "qc_vars")
+  vars <- attr(data, "qc_vars")
   suffix <- attr(data, "qc_suffix")
   if (is.null(vars) || is.null(suffix)) {
     stop("qc_progress(): data does not look like a qc_add_flags() result")
@@ -170,10 +180,10 @@ qc_progress <- function(data, quiet = FALSE, hide_complete = FALSE) {
   res <- lapply(vars, function(v) {
     fcol <- paste0(v, suffix)
     flag <- data[[fcol]]
-    val  <- data[[v]]
+    val <- data[[v]]
 
     # sanity checks and warnings
-    n_na_val  <- sum(is.na(val))
+    n_na_val <- sum(is.na(val))
     n_flag_na <- sum(flag == -1L, na.rm = TRUE)
     if (!isTRUE(n_na_val == n_flag_na)) {
       warning(sprintf(
@@ -190,28 +200,30 @@ qc_progress <- function(data, quiet = FALSE, hide_complete = FALSE) {
       ))
     }
 
-    n_all   <- length(val)
+    n_all <- length(val)
     n_valid <- n_all - n_na_val
 
     # percentages (guard against zero denominators)
     pct_nonmissing_checked <- if (n_valid > 0) {
       100 * sum(flag != 0L & flag != -1L &
-                  !is.na(val), na.rm = TRUE) / n_valid
-    } else NA_real_
+        !is.na(val), na.rm = TRUE) / n_valid
+    } else {
+      NA_real_
+    }
 
-    pct_approved  <- 100 * sum(flag == 1L,  na.rm = TRUE) / n_all
-    pct_unchecked <- 100 * sum(flag == 0L,  na.rm = TRUE) / n_all
-    pct_missing   <- 100 * sum(flag == -1L, na.rm = TRUE) / n_all
-    pct_flagged   <- 100 * sum(flag == -2L, na.rm = TRUE) / n_all
+    pct_approved <- 100 * sum(flag == 1L, na.rm = TRUE) / n_all
+    pct_unchecked <- 100 * sum(flag == 0L, na.rm = TRUE) / n_all
+    pct_missing <- 100 * sum(flag == -1L, na.rm = TRUE) / n_all
+    pct_flagged <- 100 * sum(flag == -2L, na.rm = TRUE) / n_all
 
     tibble::tibble(
       variable = v,
-      total    = n_valid,
+      total = n_valid,
       `%checked` = round(pct_nonmissing_checked, 2),
-      `%approved(1)`        = round(pct_approved, 2),
-      `%unchecked(0)`       = round(pct_unchecked, 2),
-      `%missing(-1)`        = round(pct_missing, 2),
-      `%flagged(-2)`        = round(pct_flagged, 2)
+      `%approved(1)` = round(pct_approved, 2),
+      `%unchecked(0)` = round(pct_unchecked, 2),
+      `%missing(-1)` = round(pct_missing, 2),
+      `%flagged(-2)` = round(pct_flagged, 2)
     )
   }) |> dplyr::bind_rows()
 
@@ -224,7 +236,6 @@ qc_progress <- function(data, quiet = FALSE, hide_complete = FALSE) {
 }
 
 
-
 #' Copy QC flags from one variable to another
 #'
 #' @param df Data frame/data.table with flag columns (from [qc_add_flags()]).
@@ -233,29 +244,30 @@ qc_progress <- function(data, quiet = FALSE, hide_complete = FALSE) {
 #' @param suffix Flag suffix, default "_qcflag".
 #' @return The modified data frame (invisibly).
 #' @examples
-#' df <- qc_add_flags(data.frame(a=1:3, b=1:3), vars=c("a","b"))
-#' df <- qc_transfer(df, from="a", to="b")
+#' df <- qc_add_flags(data.frame(a = 1:3, b = 1:3), vars = c("a", "b"))
+#' df <- qc_transfer(df, from = "a", to = "b")
 #' @template see-vignette
 #' @export
 qc_transfer <- function(df, from, to, suffix = "_qcflag") {
   stopifnot(is.data.frame(df), length(from) == 1, length(to) == 1)
 
   f_from <- paste0(from, suffix)
-  f_to   <- paste0(to,   suffix)
-  if (!f_from %in% names(df))
+  f_to <- paste0(to, suffix)
+  if (!f_from %in% names(df)) {
     stop("qc_transfer(): flag column not found: ", f_from)
+  }
 
   val <- df[[f_from]]
 
   if (inherits(df, "data.table")) {
-    data.table::set(df, j = f_to, value = val)  # by reference, no copy
+    data.table::set(df, j = f_to, value = val) # by reference, no copy
   } else {
     df[[f_to]] <- val
   }
 
   # keep QC attrs in sync
   vars <- unique(c(attr(df, "qc_vars"), to))
-  attr(df, "qc_vars")   <- vars[!is.na(vars)]
+  attr(df, "qc_vars") <- vars[!is.na(vars)]
   if (is.null(attr(df, "qc_suffix"))) attr(df, "qc_suffix") <- suffix
 
   invisible(df)
@@ -274,8 +286,9 @@ qc_apply_flags <- function(data, suffix = "_qcflag", drop_flags = TRUE) {
   stopifnot(is.data.frame(data))
 
   flag_cols <- names(data)[endsWith(names(data), suffix)]
-  if (!length(flag_cols))
+  if (!length(flag_cols)) {
     stop("qc_apply_flags(): no columns end with '", suffix, "'")
+  }
 
   # work on a copy if data.table
   out <- if (inherits(data, "data.table")) data.table::copy(data) else data
@@ -313,10 +326,11 @@ qc_apply_flags <- function(data, suffix = "_qcflag", drop_flags = TRUE) {
 #' n <- 48
 #' dat <- data.frame(
 #'   time = as.POSIXct("2024-01-01 00:00:00", tz = "UTC") + seq_len(n) * 3600,
-#'   temp = sin(seq_len(n)/6) + rnorm(n, 0, 0.1))
+#'   temp = sin(seq_len(n) / 6) + rnorm(n, 0, 0.1)
+#' )
 #' dat_qc <- qc_add_flags(dat)
-#' dat_qc$temp_qcflag <- 1  # approve all
-#' dat_qc$temp_qcflag[c(10, 20, 30)] <- -1  # mark a few as flagged
+#' dat_qc$temp_qcflag <- 1 # approve all
+#' dat_qc$temp_qcflag[c(10, 20, 30)] <- -1 # mark a few as flagged
 #' qc_check_plot(dat_qc, "temp", time_col = "time")
 #' @importFrom ggplot2 ggplot geom_point geom_line scale_colour_manual
 #' @importFrom ggplot2 facet_grid labeller labs theme_bw theme aes
@@ -324,21 +338,25 @@ qc_apply_flags <- function(data, suffix = "_qcflag", drop_flags = TRUE) {
 #' @export
 qc_check_plot <- function(data, y_col, suffix = "_qcflag", time_col = "DateTime") {
   stopifnot(is.data.frame(data), length(y_col) == 1, is.character(y_col))
-  if (!time_col %in% names(data))
+  if (!time_col %in% names(data)) {
     stop("qc_check_plot(): time column '", time_col, "' not found")
-  if (!y_col %in% names(data))
+  }
+  if (!y_col %in% names(data)) {
     stop("qc_check_plot(): variable '", y_col, "' not found")
+  }
 
   fcol <- paste0(y_col, suffix)
-  if (!fcol %in% names(data))
+  if (!fcol %in% names(data)) {
     stop("qc_check_plot(): flag column '", fcol, "' not found")
+  }
 
   # tidy per-panel data
   raw_df <- data.frame(
     time = data[[time_col]],
-    y    = data[[y_col]],
+    y = data[[y_col]],
     flag = data[[fcol]],
-    panel = "raw")
+    panel = "raw"
+  )
   clean_df <- raw_df
   clean_df$y[clean_df$flag < 1] <- NA
   clean_df$panel <- "clean"
@@ -346,20 +364,30 @@ qc_check_plot <- function(data, y_col, suffix = "_qcflag", time_col = "DateTime"
   df <- rbind(raw_df, clean_df)
   df$panel <- factor(df$panel, levels = c("raw", "clean"))
 
-  fl <- qc_flag_levels()  # assumes you have this helper
+  fl <- qc_flag_levels() # assumes you have this helper
 
   ggplot() +
-    geom_point(data = subset(df, panel == "raw"),
+    geom_point(
+      data = subset(df, panel == "raw"),
       aes(time, y, colour = factor(flag)),
-      size = 0.8, alpha = 0.9, stroke = 0, na.rm = TRUE) +
-    geom_line(data = subset(df, panel == "clean"),
+      size = 0.8, alpha = 0.9, stroke = 0, na.rm = TRUE
+    ) +
+    geom_line(
+      data = subset(df, panel == "clean"),
       aes(time, y),
-      colour = "black", na.rm = TRUE) +
-    scale_colour_manual(values = fl$colors, breaks = fl$levels,
-      labels = fl$labels, drop = FALSE, name = NULL) +
-    facet_grid(panel ~ ., scales = "free_y",
-      labeller = labeller(panel = c(raw = paste(y_col, "(raw)"),
-        clean = paste(y_col, "(clean)")))) +
+      colour = "black", na.rm = TRUE
+    ) +
+    scale_colour_manual(
+      values = fl$colors, breaks = fl$levels,
+      labels = fl$labels, drop = FALSE, name = NULL
+    ) +
+    facet_grid(panel ~ .,
+      scales = "free_y",
+      labeller = labeller(panel = c(
+        raw = paste(y_col, "(raw)"),
+        clean = paste(y_col, "(clean)")
+      ))
+    ) +
     labs(x = NULL, y = NULL, title = paste("QC check for", y_col)) +
     theme_bw(base_size = 10) +
     theme(legend.position = "bottom")
@@ -368,19 +396,27 @@ qc_check_plot <- function(data, y_col, suffix = "_qcflag", time_col = "DateTime"
 #' @noRd
 #' @keywords internal
 qc_is_flagged_df <- function(x, suffix = NULL) {
-  if (!is.data.frame(x)) return(FALSE)
+  if (!is.data.frame(x)) {
+    return(FALSE)
+  }
   has_attrs <- !is.null(attr(x, "qc_vars")) && !is.null(attr(x, "qc_suffix"))
-  if (has_attrs) return(TRUE)
+  if (has_attrs) {
+    return(TRUE)
+  }
   if (is.null(suffix)) suffix <- attr(x, "qc_suffix")
   if (is.null(suffix)) suffix <- "_qcflag"
-  any(endsWith(names(x), suffix))}
+  any(endsWith(names(x), suffix))
+}
 
 #' @noRd
 #' @keywords internal
-qc_flag_levels <- function() {list(
-    levels = c("1","0","-1","-2"),
-    labels = c("approved","unchecked","auto flag","manual flag"),
-    colors = c(`1`="forestgreen", `0`="steelblue", `-1`="orange", `-2`="red"))}
+qc_flag_levels <- function() {
+  list(
+    levels = c("1", "0", "-1", "-2"),
+    labels = c("approved", "unchecked", "auto flag", "manual flag"),
+    colors = c(`1` = "forestgreen", `0` = "steelblue", `-1` = "orange", `-2` = "red")
+  )
+}
 
 
 #' Write cleaned + QC (with flags) exports, with smart names
@@ -406,19 +442,19 @@ qc_flag_levels <- function() {list(
 #' @importFrom stats setNames
 #' @export
 qc_write_exports <- function(
-    data,
-    time_col            = "DateTime",
-    out_dir             = "exports",
-    base_name           = NULL,
-    qc_suffix           = "_qc",
-    clean_suffix        = "_clean",
-    write_csv           = TRUE,
-    csv_compress        = TRUE,
-    na_csv              = "NA",
-    write_parquet       = TRUE,
-    parquet_compression = c("zstd","snappy","gzip"),
-    write_xlsx          = FALSE,
-    write_rds           = FALSE
+  data,
+  time_col = "DateTime",
+  out_dir = "exports",
+  base_name = NULL,
+  qc_suffix = "_qc",
+  clean_suffix = "_clean",
+  write_csv = TRUE,
+  csv_compress = TRUE,
+  na_csv = "NA",
+  write_parquet = TRUE,
+  parquet_compression = c("zstd", "snappy", "gzip"),
+  write_xlsx = FALSE,
+  write_rds = FALSE
 ) {
   stopifnot(is.data.frame(data))
   parquet_compression <- match.arg(parquet_compression)
@@ -430,16 +466,16 @@ qc_write_exports <- function(
   if (is.null(base_name) || !nzchar(base_name)) {
     # strip a trailing _qc or _clean if present (uses your current suffix args)
     esc <- function(x) gsub("([.^$|()*+?{}\\[\\]\\\\])", "\\\\\\1", x)
-    strip_pat <- paste0("(", esc(qc_suffix), "|", esc(clean_suffix), ")$")  # e.g., (_qc|_clean)$
+    strip_pat <- paste0("(", esc(qc_suffix), "|", esc(clean_suffix), ")$") # e.g., (_qc|_clean)$
     base_name <- sub(strip_pat, "", obj_name, perl = TRUE)
     if (!nzchar(base_name)) base_name <- obj_name
   }
-  name_qc    <- paste0(base_name, qc_suffix)
+  name_qc <- paste0(base_name, qc_suffix)
   name_clean <- paste0(base_name, clean_suffix)
 
   # Build variants using your helper
-  df_qc    <- qctimeseries::qc_apply_flags(data, drop_flags = FALSE) # keep *_qcflag
-  df_clean <- qctimeseries::qc_apply_flags(data, drop_flags = TRUE)  # drop *_qcflag
+  df_qc <- qctimeseries::qc_apply_flags(data, drop_flags = FALSE)
+  df_clean <- data
 
   # Render POSIXct to UTC ISO-8601 for text outputs
   to_text_time <- function(df) {
@@ -454,21 +490,21 @@ qc_write_exports <- function(
   # CSV / CSV.gz
   if (isTRUE(write_csv)) {
     ext <- if (csv_compress) ".csv.gz" else ".csv"
-    p_qc    <- file.path(out_dir, paste0(name_qc,    ext))
+    p_qc <- file.path(out_dir, paste0(name_qc, ext))
     p_clean <- file.path(out_dir, paste0(name_clean, ext))
-    readr::write_csv(to_text_time(df_qc),    p_qc,    na = na_csv)
+    readr::write_csv(to_text_time(df_qc), p_qc, na = na_csv)
     readr::write_csv(to_text_time(df_clean), p_clean, na = na_csv)
-    written$csv_qc    <- p_qc
+    written$csv_qc <- p_qc
     written$csv_clean <- p_clean
   }
 
   # Parquet
   if (isTRUE(write_parquet) && requireNamespace("arrow", quietly = TRUE)) {
-    p_qc    <- file.path(out_dir, paste0(name_qc,    ".parquet"))
+    p_qc <- file.path(out_dir, paste0(name_qc, ".parquet"))
     p_clean <- file.path(out_dir, paste0(name_clean, ".parquet"))
-    arrow::write_parquet(df_qc,    p_qc,    compression = parquet_compression)
+    arrow::write_parquet(df_qc, p_qc, compression = parquet_compression)
     arrow::write_parquet(df_clean, p_clean, compression = parquet_compression)
-    written$parquet_qc    <- p_qc
+    written$parquet_qc <- p_qc
     written$parquet_clean <- p_clean
   }
 
@@ -479,39 +515,43 @@ qc_write_exports <- function(
     } else {
       write_xlsx_file <- function(df, path, base_sheet) {
         df2 <- to_text_time(df)
-        n <- nrow(df2); max_rows <- 1048576L
-        if (n == 0L) return(writexl::write_xlsx(setNames(list(df2), base_sheet), path))
-        parts  <- (seq_len(n) - 1L) %/% max_rows + 1L
-        idxs   <- split(seq_len(n), parts)
-        names  <- if (length(idxs) == 1L) base_sheet else paste0(base_sheet, "_", seq_along(idxs))
+        n <- nrow(df2)
+        max_rows <- 1048576L
+        if (n == 0L) {
+          return(writexl::write_xlsx(setNames(list(df2), base_sheet), path))
+        }
+        parts <- (seq_len(n) - 1L) %/% max_rows + 1L
+        idxs <- split(seq_len(n), parts)
+        names <- if (length(idxs) == 1L) base_sheet else paste0(base_sheet, "_", seq_along(idxs))
         sheets <- setNames(lapply(seq_along(idxs), function(i) df2[idxs[[i]], , drop = FALSE]), names)
         writexl::write_xlsx(sheets, path)
       }
-      x_qc    <- file.path(out_dir, paste0(name_qc,    ".xlsx"))
+      x_qc <- file.path(out_dir, paste0(name_qc, ".xlsx"))
       x_clean <- file.path(out_dir, paste0(name_clean, ".xlsx"))
-      write_xlsx_file(df_qc,    x_qc,    "qc")
+      write_xlsx_file(df_qc, x_qc, "qc")
       write_xlsx_file(df_clean, x_clean, "clean")
-      written$xlsx_qc    <- x_qc
+      written$xlsx_qc <- x_qc
       written$xlsx_clean <- x_clean
     }
   }
 
   # RDS (optional)
   if (isTRUE(write_rds)) {
-    r_qc    <- file.path(out_dir, paste0(name_qc,    ".rds"))
+    r_qc <- file.path(out_dir, paste0(name_qc, ".rds"))
     r_clean <- file.path(out_dir, paste0(name_clean, ".rds"))
-    saveRDS(df_qc,    r_qc,    compress = "xz")
+    saveRDS(df_qc, r_qc, compress = "xz")
     saveRDS(df_clean, r_clean, compress = "xz")
-    written$rds_qc    <- r_qc
+    written$rds_qc <- r_qc
     written$rds_clean <- r_clean
   }
 
   # Checksums
   if (length(written)) {
     files <- unlist(written, use.names = FALSE)
-    md5   <- tools::md5sum(files)
-    chk   <- file.path(out_dir, paste0(base_name, "_checksums.md5"))
-    con <- file(chk, open = "wt", encoding = "UTF-8"); on.exit(close(con), add = TRUE)
+    md5 <- tools::md5sum(files)
+    chk <- file.path(out_dir, paste0(base_name, "_checksums.md5"))
+    con <- file(chk, open = "wt", encoding = "UTF-8")
+    on.exit(close(con), add = TRUE)
     for (i in seq_along(md5)) cat(md5[[i]], "  ", names(md5)[i], "\n", sep = "", file = con)
     written$checksums <- chk
   }
@@ -563,13 +603,14 @@ qc_write_exports <- function(
 #' }
 qc_save_all_plots_png <- function(data,
                                   outfile = "exports/qc_checks.png",
-                                  width_in  = 25,
-                                  per_var_in= 2.5,
-                                  dpi       = 200) {
+                                  width_in = 25,
+                                  per_var_in = 2.5,
+                                  dpi = 200) {
   stopifnot(is.data.frame(data))
 
   # figure out QC vars
-  suffix <- attr(data, "qc_suffix"); if (is.null(suffix)) suffix <- "_qcflag"
+  suffix <- attr(data, "qc_suffix")
+  if (is.null(suffix)) suffix <- "_qcflag"
   vars <- attr(data, "qc_vars")
   if (is.null(vars) || !length(vars)) {
     vars <- sub(paste0(suffix, "$"), "", grep(paste0(suffix, "$"), names(data), value = TRUE))
@@ -579,14 +620,19 @@ qc_save_all_plots_png <- function(data,
   plots <- lapply(vars, function(v) qc_check_plot(data, v))
 
   total_h_in <- max(1, length(plots)) * per_var_in
-  height_px  <- ceiling(total_h_in * dpi)
-  if (height_px > 30000)
-    warning("Output will be ", height_px,
-            " px tall; some viewers may struggle. Lower dpi or split into chunks.")
+  height_px <- ceiling(total_h_in * dpi)
+  if (height_px > 30000) {
+    warning(
+      "Output will be ", height_px,
+      " px tall; some viewers may struggle. Lower dpi or split into chunks."
+    )
+  }
 
   dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
-  grDevices::png(outfile, width = width_in, height = total_h_in,
-                 units = "in", res = dpi, type = "cairo")
+  grDevices::png(outfile,
+    width = width_in, height = total_h_in,
+    units = "in", res = dpi, type = "cairo"
+  )
   on.exit(grDevices::dev.off(), add = TRUE)
 
   grid::grid.newpage()
