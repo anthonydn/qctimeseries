@@ -474,8 +474,8 @@ qc_write_exports <- function(
   name_clean <- paste0(base_name, clean_suffix)
 
   # Build variants using your helper
-  df_qc <- qctimeseries::qc_apply_flags(data, drop_flags = FALSE)
-  df_clean <- data
+  df_qc <- if (inherits(data, "data.table")) data.table::copy(data) else data
+  df_clean <- qctimeseries::qc_apply_flags(data, drop_flags = TRUE)
 
   # Render POSIXct to UTC ISO-8601 for text outputs
   to_text_time <- function(df) {
